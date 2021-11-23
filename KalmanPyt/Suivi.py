@@ -18,7 +18,9 @@ def souris(event, x, y, flags, param):
 color=90
 S=50
 V=50
-KF=KalmanFilter(0.1, [0, 0])
+u=np.matrix([[0],[0],[0]])
+x=[0,0,0]
+KF=KalmanFilter(x)
 
 VideoCap=cv2.VideoCapture(1)
 cv2.namedWindow('Camera')
@@ -28,23 +30,24 @@ while(True):
     ret, frame=VideoCap.read()
 
     points, mask=detect_inrange(frame, 800, color, S, V)
-    #points, mask=detect_visage(frame)
 
-    etat=KF.predict().astype(np.int32)
-    cv2.circle(frame, (int(etat[0]), int(etat[1])), 2, (0, 255, 0), 5)
-    cv2.arrowedLine(frame, (int(etat[0]),int(etat[1])),(int(etat[0]+etat[2]),
-                    int(etat[1]+etat[3])),color=(0, 255, 0),thickness=3,
+    x=KF.predict(u, 0.1).astype(np.int32)
+
+    cv2.circle(frame, (int(x[0]), int(x[1])), 2, (0, 255, 0), 5)
+    cv2.arrowedLine(frame, (int(x[0]),int(x[1])),(int(x[0]+30*np.cos(x[2])),
+                    int(x[1]+30*np.sin(x[2]))),color=(0, 255, 0),thickness=3,
                     tipLength=0.2)
 
     if (len(points)>0):
         cv2.circle(frame, (points[0][0], points[0][1]), 10, (0, 0, 255), 2)
-        z = np.matrix([[points[0][0]],[ points[0][1]]])
-        KF.update(z,'image')
-    #else:
-        #alpha = np.arctan2(etat[2], etat[3])+1
-        #z = np.matrix([[int(20*np.cos(alpha))], [int(20*np.sin(alpha))]])
-        #KF.update(z, 'speed')
-        #KF.updateWheels(z)
+        z=np.matrix([[points[0][0]], [points[0][1]], [0]])
+        KF.update(z)
+        u=np.matrix([[0],[0],[0]])
+    else:
+        vx=(10*np.cos(x[2]))
+        vy=(10*np.cos(x[2]))
+        u=np.matrix([[vx],[vy],[1]]) 
+
 
     cv2.putText(frame, "[Souris]Couleur: {:d}    [o|l] S:{:d}    [p|m] V{:d}".
                 format(color, S, V), (5, 20), cv2.FONT_HERSHEY_PLAIN, 1,
