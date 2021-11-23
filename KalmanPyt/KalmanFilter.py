@@ -1,34 +1,42 @@
 import numpy as np
 
 class KalmanFilter(object):
-    def __init__(self, dt, point):
+    def __init__(self, point):
         self.dt=dt
 
-        # Vecteur d'etat initial
-        self.E=np.matrix([[point[0]], [point[1]], [0], [0]])
+        # State vector : (x, y, alpha)
+        self.x=np.matrix([[point[0]], [point[1]], [0]])
 
-        # Matrice de transition
-        self.A=np.matrix([[1, 0, self.dt, 0],
-                          [0, 1, 0, self.dt],
-                          [0, 0, 1, 0],
-                          [0, 0, 0, 1]])
+        # input vector : (x_dot, y_dot, omega)
+        self.u=np.matrix([[0], [0], [0]])
 
-        # Matrice d'observation, on observe que x et y
-        self.H=np.matrix([[1, 0, 0, 0],
-                          [0, 1, 0, 0]])
+        # Matrix of system Dynamics
+        self.A=np.matrix([[1, 0, 0],
+                          [0, 1, 0],
+                          [0, 0, 1]])
 
-        self.Q=np.matrix([[1, 0, 0, 0],
-                          [0, 1, 0, 0],
-                          [0, 0, 1, 0],
-                          [0, 0, 0, 1]])
+        # Matrix of input dynamics (timestep dependent)
+        self.B=np.matrix([[1, 0, 0],
+                          [0, 1, 0],
+                          [0, 0, 1]])
 
-        self.R=np.matrix([[1, 0],
-                          [0, 1]])
+        # Observation matrix
+        self.H=np.matrix([[1, 0, 0],
+                          [0, 1, 0],
+                          [0, 0, 1]])
+
+        self.Q=np.matrix([[1, 0, 0],
+                          [0, 1, 0],
+                          [0, 0, 1]])
+
+        self.R=np.matrix([[1, 0, 0],
+                          [0, 1, 0],
+                          [0, 0, 1]])
 
         self.P=np.eye(self.A.shape[1])
 
-    def predict(self):
-        self.E=np.dot(self.A, self.E)
+    def predict(self, u, timeStep):
+        self.E=np.dot(self.A, self.E) + np.dot((timeStep*self.B), u)
         # Calcul de la covariance de l'erreur
         self.P=np.dot(np.dot(self.A, self.P), self.A.T)+self.Q
         return self.E
