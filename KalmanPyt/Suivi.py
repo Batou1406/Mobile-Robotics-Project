@@ -32,7 +32,7 @@ while(True):
     points, mask=detect_inrange(frame, 800, color, S, V)
 
     x=KF.predict(u, 0.1).astype(np.int32)
-
+    
     cv2.circle(frame, (int(x[0]), int(x[1])), 2, (0, 255, 0), 5)
     cv2.arrowedLine(frame, (int(x[0]),int(x[1])),(int(x[0]+30*np.cos(x[2])),
                     int(x[1]+30*np.sin(x[2]))),color=(0, 255, 0),thickness=3,
@@ -46,7 +46,7 @@ while(True):
     else:
         vx=(10*np.cos(x[2]))
         vy=(10*np.cos(x[2]))
-        u=np.matrix([[vx],[vy],[1]]) 
+        u=np.matrix([[vx],[vy],[1]])
 
 
     cv2.putText(frame, "[Souris]Couleur: {:d}    [o|l] S:{:d}    [p|m] V{:d}".

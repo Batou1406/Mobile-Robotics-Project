@@ -3,10 +3,14 @@ import numpy as np
 class KalmanFilter(object):
     def __init__(self, point):
         # State vector : (x, y, alpha)
-        self.x=np.matrix([[point[0]], [point[1]],[point[2]]])
+        self.x=np.matrix([[point[0]],
+                          [point[1]],
+                          [point[2]]])
 
         # input vector : (x_dot, y_dot, omega)
-        self.u=np.matrix([[0], [0], [0]])
+        self.u=np.matrix([[0],
+                          [0],
+                          [0]])
 
         # Matrix of system Dynamics
         self.A=np.matrix([[1, 0, 0],
@@ -46,7 +50,8 @@ class KalmanFilter(object):
         K=np.dot(np.dot(self.P, self.H.T), np.linalg.inv(S))
 
         # Correction / innovation
-        self.x=np.round(self.x+np.dot(K, (z-np.dot(self.H, self.x))))
+        #self.x=np.round(self.x+np.dot(K, (z-np.dot(self.H, self.x))))
+        self.x=self.x+np.dot(K, (z-np.dot(self.H, self.x)))
         I=np.eye(self.H.shape[1])
         self.P=(I-(K*self.H))*self.P
 
