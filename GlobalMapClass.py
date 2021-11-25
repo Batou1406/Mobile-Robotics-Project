@@ -1,6 +1,8 @@
 class GlobalMapClass(object):
     def __init__(self):
-        #robot position as a vector (x,y,alpha)
+        #robot position as a vector (x,y,alpha),
+        #(x,y) as float number. Integer is the cell, floating point is the position inside the cell
+        # alpha between [0,2pi]
         self.robot=np.matrix([[0],
                               [0],
                               [0]])
@@ -15,20 +17,35 @@ class GlobalMapClass(object):
         #empty list with [[x,y],[x,y],[x,y],...] position as path
         self.path=[]
 
-    def setPos(robotPos):
-        #robotPos as [[x],[y],[alpha]]
+        # vector with map size [[height],[width]]
+        self.mapSize=np.matrix([[0],
+                                [0]])
 
-    def setGoal(goalPos):
+    def setPos(self, robotPos):
+        #robotPos as [[x],[y],[alpha]]
+        self.robot=robotPos
+
+    def setGoal(self, goalPos):
         #goalPos as [[x],[y]] coordinate
-        self.goal = goalPos
+        self.goal=goalPos
 
     def setPath(self, pathList):
         #pathList contains a list of (x,y) coordinates
-        self.path = pathList
+        self.path=pathList
 
     def setObstacles(self, obstaclesList):
         #pathObstacles contains a list of (x,y) coordinates
-        self.obstacles = obstaclesList
+        self.obstacles=obstaclesList
 
-    def getPath(i):
+    def setMapSize(self, height, width):
+        self.mapSize=np.matrix([[height],
+                                  [width]])
+
+    def getPath(self, i):
         return self.path[i]
+
+    def getObstacles(self):
+        return self.obstacles
+
+    def getMapSize(self):
+        return self.mapSize
