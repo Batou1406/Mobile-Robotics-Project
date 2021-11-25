@@ -9,6 +9,7 @@ file with the kalman filter class in it with :
 x : state vector (x,y,alpha)  
 u : input vector (x_dot, y_dot, alpha_dot)  
 #### functions :
+setState(x) : set state x (x,y,alpha)
 predict(input, timeStep) : return predicted next state  
 update(z) : return corrected next state with measurement z  
 
@@ -36,7 +37,7 @@ file with all the vision functions:
 vision.height :  
 vision.width :  
 #### functions :
-vision.begin() :  
+vision.initialize() :  
 vision.robotDetection() :  
 vision.goalDetection() :  
 vision.obstaclesDetection() :  
