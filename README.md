@@ -1,26 +1,26 @@
-#### Project of Mobile Robotics descrpition
+# Project of Mobile Robotics descrpition
 structure of the project : the strcuture can be found under the machine state diagram
 the project in running in the main file. It calls all the requires functions, classes and variables from other files.
 
-### Function, classes and variables.
-## kalmanFilterClass
+## Function, classes and variables.
+### kalmanFilterClass
 file with the kalman filter class in it with :
-# variables :
+#### variables :
 x : state vector (x,y,alpha)
 u : input vector (x_dot, y_dot, alpha_dot)
-# functions :
+#### functions :
 predict(input, timeStep) : return predicted next state
 update(z) : return corrected next state with measurement z
 
-## GloabalMapClass
+### GloabalMapClass
 file with the global map in it :
-# variables :
+#### variables :
 robot : robot position (x,y,alpha)
 goal : goal position (x,y)
 obstacles : list of obstacles
 path : list of position for the shortest path
 mapSize : vector with (height, width) of the map
-# functions :
+##### functions :
 setPos(robotPos) :
 setGoal(goalPos) :
 setPath(pathList) :
@@ -30,13 +30,19 @@ getPath(i) :
 getObstacles() :
 getMapSize() :
 
-## visionClass
+### visionClass
 file with all the vision functions:
-# variables :
+#### variables :
 vision.height :
 vision.width :
-# functions :
+#### functions :
 vision.begin() :
 vision.robotDetection() :
 vision.goalDetection() :
 vision.obstaclesDetection() :
+
+### ShorthestPath
+file the shortest path implementation :
+#### Variables :
+#### fucntions :
+aStar(mapSize, obstaclesList) :
