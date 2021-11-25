@@ -3,10 +3,10 @@
 initialisation
 """
 #librairy
-import VisionClass
-import GlobalMapClass
-import ShorthestPath as SP
-import KalmanFilterClass
+from VisionClass import VisionClass
+from GlobalMapClass import GlobalMapClass
+from ShorthestPath import ShorthestPath as SP
+from KalmanFilterClass import KalmanFilterClass
 import MotionClass
 
 #flag
@@ -52,7 +52,7 @@ while(not(reachedGoal)):
     globalMap.setPos(kalmanFilter.x)
 
     #compute and apply input
-    
+
 
     # re-initialise if bloqued or kidnapp
     if(bloqued or kidnap):
@@ -63,5 +63,6 @@ while(not(reachedGoal)):
         globalMap.setObstacles(vision.obstaclesDetection())
         gloablMap.setPath(SP.aStar(globalMap.getMapSize(), globalMap.getObstacles()))
 
+    #check if goal is reached
     if(round(globalMap.robot) == round(gloablMap.goal)):
         reachedGoal=True

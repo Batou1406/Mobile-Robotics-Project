@@ -1,6 +1,6 @@
 import numpy as np
 
-class KalmanFilter(object):
+class KalmanFilterClass(object):
     def __init__(self, point):
         # State vector : (x, y, alpha)
         self.x=np.matrix([[0],
