@@ -5,7 +5,7 @@ initialisation
 #librairy
 from VisionClass import VisionClass
 from GlobalMapClass import GlobalMapClass
-from ShorthestPath import ShorthestPath as SP
+import ShorthestPath
 from KalmanFilterClass import KalmanFilterClass
 import MotionClass
 
@@ -36,7 +36,9 @@ globalMap.setGoal(vision.goalDetection())
 globalMap.setObstacles(vision.obstaclesDetection())
 
 #Shorthest path computation
-gloablMap.setPath(SP.aStar(globalMap.getMapSize(), globalMap.getObstacles()))
+gloablMap.setPath(ShorthestPath.aStar(globalMap.getObstacles(),gloablMap.getMapSize()[0],
+                                      gloablMap.getMapSize()[1], gloablMap.getPos(),
+                                      globalMap.getGoal()))
 
 
 
@@ -61,7 +63,9 @@ while(not(reachedGoal)):
         globalMap.setPos(vision.robotDetection())
         globalMap.setGoal(vision.goalDetection())
         globalMap.setObstacles(vision.obstaclesDetection())
-        gloablMap.setPath(SP.aStar(globalMap.getMapSize(), globalMap.getObstacles()))
+        gloablMap.setPath(ShorthestPath.aStar(globalMap.getObstacles(),gloablMap.getMapSize()[0],
+                                              gloablMap.getMapSize()[1], gloablMap.getPos(),
+                                              globalMap.getGoal()))
 
     #check if goal is reached
     if(round(globalMap.robot) == round(gloablMap.goal)):

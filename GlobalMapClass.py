@@ -49,3 +49,9 @@ class GlobalMapClass(object):
 
     def getMapSize(self):
         return self.mapSize
+
+    def getPos(self):
+        return self.robot
+
+    def getGoal(self):
+        return self.goal
