@@ -2,6 +2,7 @@ from tdmclient import ClientAsync, aw
 import numpy as np
 from scipy.interpolate import interp1d
 import math
+import time
 
 sensor_measurements = np.array([i for i in range(0,21)])
 sensor_distances = np.array([5120, 4996, 4964, 4935, 4554, 4018, 3624, 3292, 2987, 
@@ -28,11 +29,31 @@ class LocalNavigator:
         aw(self.node.lock())
         aw(self.node.wait_for_variables())
 
-        self.dist_threshold = 1800
-        self.motor_speed = 300
+        self.dist_threshold = 1600 # 2000
+        self.motor_speed = 200
         self.sensor_vals = list(self.node['prox.horizontal'])
         self.verbose = True # whether to print status message or not
-        self.direction = self.val_to_angle(90)
+        # self.flag_direction = self.val_to_angle(0) # angle between Thymio and goal (flag)
+        self.angle = self.val_to_angle(0) # the current rotated angle of Thymio
+        self.cumulative_angle = self.val_to_angle(0) # the cumulative rotated angles
+        self.turn_direction = 1 # turn right: 1, turn left: -1
+        self.start = 0 # start time to rotate
+        self.end = 0 # end time to rotate
+        self.time = 0 # rotation time
+        """
+        |Degree|speed|velocity (degree/sec)|
+        |------|-----|---------------------|
+        | 1080 | 300 |         108         |
+        | 554  | 200 |         55          |
+        | 370  | 100 |         37          |
+        | 325  | 80  |         32          |
+        | 222  | 50  |         22          |
+        | 135  | 30  |         13          |
+        """
+        self.omega = 0 # rotation velocity
+
+    def get_outputs(self):
+        return (self.angle, self.cumulative_angle, self.motor_speed)
 
     def val_to_angle(self, val):
         return val * math.pi / 180
@@ -45,11 +66,56 @@ class LocalNavigator:
                 "motor.right.target": [r_speed],
                 }
     
+    def print_sensor_values(self):
+        if self.verbose:
+            print("\tSensor values (prox_horizontal): ", self.sensor_vals)
+    
+    def compute_angle(self):
+        self.angle = self.turn_direction * self.omega * self.time
+        self.cumulative_angle += self.angle
+        if self.verbose:
+            print("Rotated angle: ", self.angle)
+            print("Cumulative rotated angle: ", self.cumulative_angle)
+
+    # def compute_flag_direction(self):
+    #     self.flag_direction -= self.angle
+    #     if self.verbose:
+    #         print("Flag direction: ", self.flag_direction)
+
+    def compute_motor_speed(self):
+        max_sensor_val = max(self.sensor_vals)
+
+        if 0 <= max_sensor_val < 1300:
+            self.motor_speed = 200
+            self.omega = 55
+        elif 1300 <= max_sensor_val < 1800:
+            self.motor_speed = 100
+            self.omega = 37
+        elif 1800 <= max_sensor_val < 2000:
+            self.motor_speed = 80
+            self.omega = 32
+        elif 2000 <= max_sensor_val < 2300:
+            self.motor_speed = 50
+            self.omega = 22
+        elif 2300 <= max_sensor_val:
+            self.motor_speed = 30
+            self.omega = 13
+
     async def turn_left(self):
+        print("Turn left")
+        self.turn_direction = -1
+        self.start = time.time()
         await self.node.set_variables(self.motor(-self.motor_speed, self.motor_speed))
+        self.end = time.time()
+        self.time = self.end - self.start
     
     async def turn_right(self):
+        print("Turn right")
+        self.turn_direction = 1
+        self.start = time.time()
         await self.node.set_variables(self.motor(self.motor_speed, -self.motor_speed))
+        self.end = time.time()
+        self.time = self.end - self.start
 
     async def forward(self):
         await self.node.set_variables(self.motor(self.motor_speed, self.motor_speed))
@@ -57,45 +123,66 @@ class LocalNavigator:
     async def backward(self):
         await self.node.set_variables(self.motor(-self.motor_speed, -self.motor_speed))
 
-    async def avoid(self, angle):
-        if self.verbose:
-            print("\tSensor values (prox_horizontal): ", self.sensor_vals)
-
+    async def avoid(self):
         front_prox_horizontal = self.sensor_vals[:5]
         back_prox_horizontal = self.sensor_vals[5:]
 
-        if any([x < self.dist_threshold for x in front_prox_horizontal]):
-            if angle < self.val_to_angle(90): # goal is on right side
-                await self.turn_right()
-            else: # goal is on left side
-                await self.turn_left()
+        self.print_sensor_values()
+
+        # compute the proper motor speed according to the distance of obstacle
+        self.compute_motor_speed()
+
+        if all([x < self.dist_threshold for x in front_prox_horizontal]): # no obstacle
+            print("No obstacle")
+            # if self.flag_direction < self.val_to_angle(0): # goal is on left side
+            #     await self.turn_left()
+            # elif self.flag_direction > self.val_to_angle(0): # goal is on right side
+            #     await self.turn_right()
             await self.forward()
+            self.time = 0
 
-        if front_prox_horizontal[2] > self.dist_threshold: # front obstacle
-            # await self.backward()
-            if front_prox_horizontal[1] < front_prox_horizontal[3]: # close to left
-                await self.turn_right()
-            else: # close to right
+        elif front_prox_horizontal[2] > self.dist_threshold: # front obstacle
+            print("Front obstacle")
+            if front_prox_horizontal[2] > 4000: # too close to the obstacle
+                await self.backward()
+            
+            if (front_prox_horizontal[1] - front_prox_horizontal[3]) < -100: # close to right
                 await self.turn_left()
+            elif (front_prox_horizontal[1] - front_prox_horizontal[3]) < 100: # close to left
+                await self.turn_right()
+            else:
+                if np.random.randint(20) < 1: # probability 0.05
+                    print(">> Explore!")
+                    await self.turn_left()
+                else: # probability 0.95
+                    await self.turn_right()
 
-        if any([x > self.dist_threshold for x in front_prox_horizontal[:2]]): # left obstacle
+        elif any([x > self.dist_threshold for x in front_prox_horizontal[:2]]): # left obstacle
+            print("Left obstacle")
             await self.turn_right()
 
-        if any([x > self.dist_threshold for x in front_prox_horizontal[3:]]): # right obstacle
+        elif any([x > self.dist_threshold for x in front_prox_horizontal[3:]]): # right obstacle
+            print("Right obstacle")
             await self.turn_left()
 
-        if any([x > self.dist_threshold for x in back_prox_horizontal]): # back obstacle
+        elif any([x > self.dist_threshold for x in back_prox_horizontal]): # back obstacle
+            print("Back obstacle")
             await self.forward()
+            self.time = 0
         
-        await self.client.sleep(0.1)
-
-        return (self.direction, self.motor_speed)
+        # compute Thymio's rotated direction (angle)
+        self.compute_angle()
+        # compute flag direction after Thymio rotated
+        # self.compute_flag_direction()
 
     async def run(self):
+        angle = self.val_to_angle(0)
         while True:
+            # print(chr(27) + "[2J") # clear terminal
+            # await self.client.sleep(0.1)
+            print("===============================================")
             self.sensor_vals = list(self.node['prox.horizontal'])
-            angle = self.val_to_angle(60)
-            await self.avoid(angle)
+            await self.avoid()
 
 if __name__ == "__main__":
     local_naviagtor = LocalNavigator()
