@@ -15,6 +15,8 @@
 - end: end time to rotate
 - time: rotation time
 - omega: rotation velocity (degree/sec)
+
+
 |Degree|speed|velocity (degree/sec)|
 |:----:|:---:|:-------------------:|
 | 1080 | 300 |         108         |
