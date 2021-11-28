@@ -108,10 +108,14 @@ def create_occupancy_grid(map_raw, grid_size):
     occupancy_grid = np.zeros((height,width))
     n = round(map_occupancy.shape[0]/height)
 
+    obstalcesList = []
     for i in range(height):
         for j in range(width):
             result = np.sum(map_occupancy[n*i:n*(i+1),n*j:n*(j+1)])
             if result > 0 :
-                occupancy_grid[height-1-i,j] = 1
+                #occupancy_grid[height-1-i,j] = 1
+                obstalcesList.append([height-1-i,j])
 
-    return occupancy_grid, n
+
+    #return occupancy_grid, n
+    return obstalcesList
