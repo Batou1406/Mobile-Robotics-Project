@@ -24,7 +24,11 @@
 | 370  | 100 |         37          |
 | 325  | 80  |         32          |
 | 222  | 50  |         22          |
-| 135  | 30  |         13          |
+| 135  | 30  |         13          |  
+
+
+- is_alter: a list for checking whether Thymio stuck in deadlock
+- deadlock_flag: whether Thymio stuck in deadlock
 
 
 **Methods**
@@ -34,6 +38,7 @@
 - print_sensor_values(): print sensor values
 - compute_angle(): compute the current rotated angle and the cumulative angle of Thymio.
 - compute_motor_speed(): get the proper motor speed and corresponding omega value according to the distance of obstacles
+- check_deadlock(): if Thymio turn right and turn left alternately over 20 times then set deadlock_flag as True
 - turn_left(): set (-l_speed, r_speed), and compute rotation time
 - turn_right(): set (l_speed, -r_speed), and compute rotation time
 - forward(): set (l_speed, r_speed)
@@ -77,8 +82,12 @@ if any of two front right sensor values is greater than the threshold
 if any of two back sensor values is greater than the threshold
     Go forward
 ```
+- Deadlock
+```
+Turn right until there is no obstacle
+```
 
 ## TODO
-- [ ] Solve the dead lock.
+- [X] Solve the deadlock.
 - [ ] Back to the original path (global path)
-- [ ] Find the hyperparameter (dist_threshold)
+- [X] Find the hyperparameter (dist_threshold)
