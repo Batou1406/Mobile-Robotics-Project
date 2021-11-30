@@ -4,15 +4,10 @@ import heapq
 def heuristic(a, b):
     return np.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2)
 
-def generateGrid(obstaclesList, height, width):
-    grid=np.zeros((height, width))
-    for i in range(len(obstaclesList)):
-        grid[obstaclesList[i][0]][obstaclesList[i][1]]=1
-    return grid
-
 
 def astar(obstaclesGrid, height, width, start, goal):
-    #array=generateGrid(obstaclesList, height, width)
+    start=(start[1],start[0])
+    goal= (goal[1],goal[0])
     array=obstaclesGrid
     neighbors=[(0,1),(0,-1),(1,0),(-1,0),(1,1),(1,-1),(-1,1),(-1,-1)]
     close_set=set()
@@ -21,7 +16,6 @@ def astar(obstaclesGrid, height, width, start, goal):
     fscore={start:heuristic(start, goal)}
     oheap=[]
     heapq.heappush(oheap, (fscore[start], start))
-
     while oheap:
         current=heapq.heappop(oheap)[1]
         if current==goal:

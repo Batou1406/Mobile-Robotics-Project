@@ -5,54 +5,49 @@ class GlobalMapClass(object):
         #robot position as a vector (x,y,alpha),
         #(x,y) as float number. Integer is the cell, floating point is the position inside the cell
         # alpha between [0,2pi]
-        self.robot=np.matrix([[0],
-                              [0],
-                              [0]])
+        self.robot=[0,0,0]
 
         # goal postion as a vector (x,y)
-        self.goal=np.matrix([[0],
-                             [0]])
+        self.goal=[0,0]
 
-        #empty list with [[x,y],[x,y],[x,y],...] obstacles position
-        self.obstacles=[]
+        #obstacles grid with zero and one of size mapSize
+        self.obstaclesGrid=None
 
         #empty list with [[x,y],[x,y],[x,y],...] position as path
-        self.path=[]
+        self.path=None
 
         # vector with map size [[height],[width]]
-        self.mapSize=np.matrix([[0],
-                                [0]])
+        self.mapSize=[0,0]
 
-    def setPos(self, robotPos):
-        #robotPos as [[x],[y],[alpha]]
+    def setRobot(self, robotPos):
+        #robotPos as [x,y,alpha]
         self.robot=robotPos
 
     def setGoal(self, goalPos):
-        #goalPos as [[x],[y]] coordinate
+        #goalPos as [x,y] coordinate
         self.goal=goalPos
 
     def setPath(self, pathList):
         #pathList contains a list of (x,y) coordinates
         self.path=pathList
 
-    def setObstacles(self, obstaclesList):
+    def setObstacles(self, obstacles):
         #pathObstacles contains a list of (x,y) coordinates
-        self.obstacles=obstaclesList
+        self.obstaclesGrid=obstacles
 
     def setMapSize(self, height, width):
-        self.mapSize=np.matrix([[height],
-                                  [width]])
+        self.mapSize=[height,width]
 
     def getPath(self, i):
         return self.path[i]
 
     def getObstacles(self):
-        return self.obstacles
+        return self.obstaclesGrid
 
     def getMapSize(self):
         return self.mapSize
 
-    def getPos(self):
+    def getRobot(self):
         return self.robot
 
     def getGoal(self):
