@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-def find_goal(map_raw):
+def goalDetection(map_raw):
     # Values for detecting the color red
     low_red = np.array([150, 100, 50])
     high_red = np.array([200, 255, 255])
@@ -29,7 +29,7 @@ def find_goal(map_raw):
         return np.matrix([[circles[0, 0, 0]], [circles[0, 0, 1]]]) #goal position in x,y form
 
 
-def find_thymio(map_raw):
+def robotDetection(map_raw):
     # Values for detecting the color green
     low_green = np.array([10, 100, 50])
     high_green = np.array([130, 255, 255])
@@ -69,7 +69,7 @@ def find_thymio(map_raw):
         return np.matrix([[thymio_x], [thymio_y], [thymio_theta]])
 
 
- def preprocessing(map_raw):
+def preprocessing(map_raw):
     # Convert to RGB
     map_rgb = cv2.cvtColor(map_raw, cv2.COLOR_BGR2RGB)
 
@@ -98,7 +98,7 @@ def find_thymio(map_raw):
     return map_occupancy
 
 
-def create_occupancy_grid(map_raw, grid_size):
+def obstaclesDetection(map_raw, grid_size):
 
     map_occupancy = preprocessing(map_raw)
 
@@ -108,14 +108,11 @@ def create_occupancy_grid(map_raw, grid_size):
     occupancy_grid = np.zeros((height,width))
     n = round(map_occupancy.shape[0]/height)
 
-    obstalcesList = []
     for i in range(height):
         for j in range(width):
             result = np.sum(map_occupancy[n*i:n*(i+1),n*j:n*(j+1)])
             if result > 0 :
-                #occupancy_grid[height-1-i,j] = 1
-                obstalcesList.append([height-1-i,j])
-
+                occupancy_grid[height-1-i,j] = 1
 
     #return occupancy_grid, n
-    return obstalcesList
+    return occupancy_grid

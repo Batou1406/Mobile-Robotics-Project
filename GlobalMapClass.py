@@ -1,3 +1,5 @@
+import numpy as np
+
 class GlobalMapClass(object):
     def __init__(self):
         #robot position as a vector (x,y,alpha),

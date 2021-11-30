@@ -27,7 +27,7 @@ angleToGoal=None
 vision.initialize()
 
 #Kalman filter initialisation
-kalmaFilter.setState(vision.robotDetection())
+kalmanFilter.setState(vision.robotDetection())
 
 #map initialisation
 gloablMap.mapSize(vision.height, vision.width)

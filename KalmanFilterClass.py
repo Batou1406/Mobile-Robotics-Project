@@ -1,7 +1,7 @@
 import numpy as np
 
 class KalmanFilterClass(object):
-    def __init__(self, point):
+    def __init__(self):
         # State vector : (x, y, alpha)
         self.x=np.matrix([[0],
                           [0],
@@ -37,10 +37,8 @@ class KalmanFilterClass(object):
 
         self.P=np.eye(self.A.shape[1])
 
-    def setState(point):
-        self.x=np.matrix([[point[0]],
-                          [point[1]],
-                          [point[2]]])
+    def setState(self, point):
+        self.x=point
 
     def predict(self, input, timeStep):
         self.u = input

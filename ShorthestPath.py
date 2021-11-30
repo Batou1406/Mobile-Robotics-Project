@@ -11,8 +11,9 @@ def generateGrid(obstaclesList, height, width):
     return grid
 
 
-def astar(obstaclesList, height, width, start, goal):
-    array=generateGrid(obstaclesList, height, width)
+def astar(obstaclesGrid, height, width, start, goal):
+    #array=generateGrid(obstaclesList, height, width)
+    array=obstaclesGrid
     neighbors=[(0,1),(0,-1),(1,0),(-1,0),(1,1),(1,-1),(-1,1),(-1,-1)]
     close_set=set()
     came_from={}
