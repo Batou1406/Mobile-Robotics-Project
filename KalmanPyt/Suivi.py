@@ -4,9 +4,12 @@ from KalmanFilter import KalmanFilter
 import numpy as np
 
 def souris(event, x, y, flags, param):
-    global lo, hi, color
+    global lo, hi, color, red, green, blue
     if event==cv2.EVENT_LBUTTONDBLCLK:
         color=frame[y, x][0]
+        blue=frame[y, x][0]
+        green=frame[y, x][1]
+        red=frame[y, x][2]
     if event==cv2.EVENT_MOUSEWHEEL:
         if flags<0:
             if color>5:
@@ -18,6 +21,7 @@ def souris(event, x, y, flags, param):
 color=90
 S=50
 V=50
+red, green, blue = 0,0,0
 u=np.matrix([[0],[0],[0]])
 x=[0,0,0]
 KF=KalmanFilter(x)
@@ -50,7 +54,7 @@ while(True):
 
 
     cv2.putText(frame, "[Souris]Couleur: {:d}    [o|l] S:{:d}    [p|m] V{:d}".
-                format(color, S, V), (5, 20), cv2.FONT_HERSHEY_PLAIN, 1,
+                format(blue, green, red), (5, 20), cv2.FONT_HERSHEY_PLAIN, 1,
                  (255, 255, 255), 1, cv2.LINE_AA)
 
 

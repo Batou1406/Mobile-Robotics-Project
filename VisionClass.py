@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import calibrate
 
 class VisionClass(object):
     def __init__(self,mapSize):
@@ -10,7 +11,12 @@ class VisionClass(object):
         self.gridX=mapSize[0]
         self.gridY=mapSize[1]
         self.image=None
+        self.imageDraw=None
         self.VideoCap=None
+        self.lowGoal=np.zeros(3)
+        self.highGoal=np.zeros(3)
+        self.lowRobot=np.zeros(3)
+        self.highRoobot=np.zeros(3)
         self.map=None
         self.mask=None
         self.erode=None
@@ -18,49 +24,45 @@ class VisionClass(object):
         self.gray=None
 
     def initialize(self):
-        #self.VideoCap=cv2.VideoCapture(0)
-        #ret, frame=self.VideoCap.read()
-        #self.image=frame
+        blueG, greenG, redG, blueR, greenR, redR=calibrate.calibration()
+        print(blueG, greenG, redG, blueR, greenR, redR)
+        self.lowGoal=np.array([blueG-40,greenG-40,redG-40])
+        self.highGoal=np.array([blueG+40,greenG+40,redG+40])
+        self.lowRobot=np.array([blueR-25,greenR-25,redR-25])
+        self.highRobot=np.array([blueR+25,greenR+25,redR+25])
+        self.VideoCap=cv2.VideoCapture(0)
+        ret, frame=self.VideoCap.read()
+        self.image=frame
 
-        self.image = cv2.imread('Final_map.jpg')
 
-        #BGR to HSV
-        map_hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
+    def Size(self):
+        #filter
+        gray=cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+        self.map=gray
+        blur=cv2.GaussianBlur(gray, (7, 7), 0.5)
+        self.mask=blur
+        edge=cv2.Canny(blur, 0, 50, 3)
+        self.erode=edge
 
-        self.map = map_hsv
-
-        # range of color for contours
-        #low_blue = np.array([94, 80, 2])
-        #high_blue = np.array([126, 255, 255])
-        low_blue = np.array([90, 80, 10])
-        high_blue = np.array([130, 255, 255])
-
-        # mask to detect the color
-        mask = cv2.inRange(map_hsv, low_blue, high_blue)
-        map_mask_countour = cv2.bitwise_and(self.image, self.image, mask=mask)
-
-        self.mask = map_mask_countour
-
-        # filtering
-        kernel_remove = np.ones((10,10),np.uint8)
-        map_erode = cv2.erode(map_mask_countour, kernel_remove, iterations=1)
-
-        self.erode = map_erode
-
-        # convert to gray
-        gray = cv2.cvtColor(map_erode, cv2.COLOR_RGB2GRAY)
-
-        self.gray = gray
-
-        # convert to binary
-        _, binary = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY)
-
-        self.binary = binary
-
-        contours,hierarchy=cv2.findContours(binary,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        #find Countours
+        contours, hierarchy=cv2.findContours(edge, cv2.RETR_EXTERNAL,
+                                               cv2.CHAIN_APPROX_SIMPLE)
+        #if no contours are found
         if(len(contours) < 1):
             return False
-        x,y,w,h=cv2.boundingRect(contours[-1])
+
+        #take largest rectangle
+        x,y,w,h = 0,0,0,0
+        for cnt in contours:
+            x_new,y_new,w_new,h_new=cv2.boundingRect(cnt)
+            if(w_new*h_new>w*h):
+                x,y,w,h=x_new,y_new,w_new,h_new
+
+        #dray rectangle for display purpose
+        self.imageDraw=self.image.copy()
+        cv2.rectangle(self.imageDraw, (x,y), pt2=(x+w,y+h), color=(255,0,0), thickness=10)
+
+        #set up variables for grid conversion
         self.cornerX=x
         self.cornerY=y
         self.ratioX=w
@@ -83,49 +85,32 @@ class VisionClass(object):
 
 
     def goalDetection(self):
-        # Values for detecting the color red
-        low_red=np.array([150, 100, 50])
-        high_red=np.array([200, 255, 255])
-
-        # Convert image to HSV
-        map_hsv=cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
-
-        # Apply mask to image to get the goal (red circle)
-        mask=cv2.inRange(map_hsv, low_red, high_red)
+        mask=cv2.inRange(self.image, self.lowGoal, self.highGoal)
+        self.mask=mask
         map_mask_goal=cv2.bitwise_and(self.image, self.image, mask=mask)
-
-        # Convert image to gray
+        self.erode=map_mask_goal
         gray_goal=cv2.cvtColor(map_mask_goal, cv2.COLOR_BGR2GRAY)
-
-        # Detect circles
+        self.binary=gray_goal
         circles=cv2.HoughCircles(gray_goal, cv2.HOUGH_GRADIENT,
                                    1, 20, param1=100, param2=10,
-                                   minRadius=20, maxRadius=100)
-
-        # Output
+                                   minRadius=5, maxRadius=500)
         if circles is None:
             print("Warning: No goal found, take another picture.")
-            find_goal(self.image) # Remove argument when code is modified
         else:
+            cv2.circle(self.imageDraw, (int(circles[0, 0, 0]), int(circles[0, 0, 1])), 2, (0, 255, 0), 5)
             goalX, goalY=self.pixelToCM(circles[0, 0, 0],circles[0, 0, 1]) #goal position in x,y form
             return [goalX, goalY]
 
 
     def robotDetection(self):
-        # Values for detecting the color green
-        low_green = np.array([10, 100, 50])
-        high_green = np.array([130, 255, 255])
-
-        # Convert image to HSV
-        map_hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
-
         # Apply mask to image to get the goal (red circle)
-        mask = cv2.inRange(map_hsv, low_green, high_green)
+        mask = cv2.inRange(self.image, self.lowRobot, self.highRobot)
+        self.mask=mask
         map_mask_thymio = cv2.bitwise_and(self.image, self.image, mask=mask)
-
+        self.erode=map_mask_thymio
         # Convert image to gray
         gray_thymio = cv2.cvtColor(map_mask_thymio, cv2.COLOR_BGR2GRAY)
-
+        self.binary=gray_thymio
         # Detect circles
         circles = cv2.HoughCircles(gray_thymio, cv2.HOUGH_GRADIENT,
                                    1, 20, param1=100, param2=10,
@@ -134,7 +119,6 @@ class VisionClass(object):
         # Output
         if circles.shape[1]<2:
             print("Warning: No thymio found, take another picture.")
-            find_thymio(self.image) # Remove argument when code is modified
         else:
             if circles[0][0][2] > circles[0][1][2]:
                 xp,yp,rp = circles[0][1]
@@ -147,9 +131,10 @@ class VisionClass(object):
 
             thymio_x = xg
             thymio_y = yg
-            thymio_theta = np.arctan2(direction[1], direction[0])
+            thymio_theta = -np.arctan2(direction[1], direction[0])
+            cv2.circle(self.imageDraw, (int(thymio_x), int(thymio_y)), 2, (0, 255, 0), 5)
             thymio_x_cm, thymio_y_cm = self.pixelToCM(thymio_x, thymio_y)
-            return [thymio_x_cm, thymio_y_cm, -thymio_theta]
+            return [thymio_x_cm, thymio_y_cm, thymio_theta]
 
 
     def preprocessing(self):
@@ -198,5 +183,5 @@ class VisionClass(object):
                                               (ny*j+self.cornerY):(ny*(j+1)+self.cornerY)])
                 if result > 0 :
                     occupancy_grid[height-i-1,j] = 1
-                    
+
         return occupancy_grid
