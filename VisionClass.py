@@ -101,8 +101,47 @@ class VisionClass(object):
             goalX, goalY=self.pixelToCM(circles[0, 0, 0],circles[0, 0, 1]) #goal position in x,y form
             return [goalX, goalY]
 
-
     def robotDetection(self):
+        # Values for detecting the color green
+        low_green = np.array([10, 100, 50])
+        high_green = np.array([130, 255, 255])
+
+        # Convert image to HSV
+        map_hsv = cv2.cvtColor(self.image, cv2.COLOR_BGR2HSV)
+
+        # Apply mask to image to get the goal (red circle)
+        mask = cv2.inRange(map_hsv, low_green, high_green)
+        map_mask_thymio = cv2.bitwise_and(self.image, self.image, mask=mask)
+
+        # Convert image to gray
+        gray_thymio = cv2.cvtColor(map_mask_thymio, cv2.COLOR_BGR2GRAY)
+
+        # Detect circles
+        circles = cv2.HoughCircles(gray_thymio, cv2.HOUGH_GRADIENT,
+                                   1, 20, param1=100, param2=10,
+                                   minRadius=0, maxRadius=100)
+
+        # Output
+        if circles.shape[1]<2:
+            print("Warning: No thymio found, take another picture.")
+            find_thymio(self.image) # Remove argument when code is modified
+        else:
+            if circles[0][0][2] > circles[0][1][2]:
+                xp,yp,rp = circles[0][1]
+                xg,yg,rg = circles[0][0]
+            else:
+                xp,yp,rp = circles[0][0]
+                xg,yg,rg = circles[0][1]
+
+            direction = [xp-xg,yp-yg]
+
+            thymio_x = xg
+            thymio_y = yg
+            thymio_theta = np.arctan2(direction[1], direction[0])
+            thymio_x_cm, thymio_y_cm = self.pixelToCM(thymio_x, thymio_y)
+            return [thymio_x_cm, thymio_y_cm, -thymio_theta]
+
+    def robotDetection2(self):
         # Apply mask to image to get the goal (red circle)
         mask = cv2.inRange(self.image, self.lowRobot, self.highRobot)
         self.mask=mask

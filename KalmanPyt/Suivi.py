@@ -53,7 +53,7 @@ while(True):
         u=np.matrix([[vx],[vy],[1]])
 
 
-    cv2.putText(frame, "[Souris]Couleur: {:d}    [o|l] S:{:d}    [p|m] V{:d}".
+    cv2.putText(frame, "[Souris] blue: {:d}   [o|l] green:{:d}  [p|m] red{:d}".
                 format(blue, green, red), (5, 20), cv2.FONT_HERSHEY_PLAIN, 1,
                  (255, 255, 255), 1, cv2.LINE_AA)
 
