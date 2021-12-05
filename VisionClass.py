@@ -10,17 +10,19 @@ class VisionClass(object):
         self.cornerY=0
         self.gridX=mapSize[0]
         self.gridY=mapSize[1]
+        self.goalX=0
+        self.goalY=0
         self.image=None
         self.imageDraw=None
         self.VideoCap=None
-        self.lowGoal=[84, 38, 137]
-        self.highGoal=[124, 78, 177]
-        self.lowRobot=[83, 75, 75]
-        self.highRoobot=[103,255,255]
-        self.HSWG=False
-        self.HSWR=True
+        self.lowGoal=np.array([130, 30, 53])
+        self.highGoal=np.array([170, 70, 93])
+        self.lowRobot=np.array([72, 75, 75])
+        self.highRobot=np.array([92,255,255])
+        self.HSVG=False
+        self.HSVR=True
         self.handCalibration=handCalibration
-        self.tresh=70
+        self.tresh=55
         self.map=None
         self.mask=None
         self.erode=None
@@ -94,6 +96,8 @@ class VisionClass(object):
         ret, frame=self.VideoCap.read()
         self.image=frame
         self.imageDraw=frame
+        cv2.rectangle(self.imageDraw, (self.cornerX,self.cornerY), pt2=(self.cornerX+self.ratioX,self.cornerY+self.ratioY), color=(255,0,0), thickness=10)
+        cv2.circle(self.imageDraw, (self.goalX, self.goalY), 10, (0, 0, 255), 2)
 
     def display(self):
         cv2.imshow('Image Draw', self.imageDraw)
@@ -124,9 +128,13 @@ class VisionClass(object):
         if (len(points)>0):
             cv2.circle(self.imageDraw, (points[0][0], points[0][1]), 10, (0, 0, 255), 2)
             goalX, goalY=self.pixelToCM(points[0][0], points[0][1]) #goal position in x,y form
+            self.goalX=goalX
+            self.goalY=goalY
             return [goalX, goalY]
         else:
             print("Warning: No goal found, take another picture.")
+            self.goalX=0
+            self.goalY=0
             return False
 
 

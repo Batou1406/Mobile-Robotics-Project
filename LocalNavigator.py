@@ -15,6 +15,7 @@ class LocalNavigator:
         self.motor_speed = 200
         self.sensor_vals = list(self.node['prox.horizontal'])
         self.verbose = True # whether to print status message or not
+        self.threshold = self.val_to_angle(6) # threshold value for global path (given angle)
         self.angle = self.val_to_angle(0) # the current rotated angle of Thymio
         self.cumulative_angle = self.val_to_angle(0) # the cumulative rotated angles
         self.turn_direction = 1 # turn right: 1, turn left: -1
@@ -48,11 +49,11 @@ class LocalNavigator:
                 "motor.left.target": [l_speed],
                 "motor.right.target": [r_speed],
                 }
-    
+
     def print_sensor_values(self):
         if self.verbose:
             print("\tSensor values (prox_horizontal): ", self.sensor_vals)
-    
+
     def compute_angle(self):
         self.angle = self.turn_direction * self.omega * self.time
         self.cumulative_angle += self.angle
@@ -79,6 +80,7 @@ class LocalNavigator:
             self.motor_speed = 30
             self.omega = 13
 
+
     async def check_deadlock(self):
         if len(self.is_alter) > 20 and sum(self.is_alter) == 0: # turn right and turn left alternately over 20 times
             print(">>Deadlock")
@@ -92,7 +94,7 @@ class LocalNavigator:
         self.end = time.time()
         self.time = self.end - self.start
         self.is_alter.append(self.turn_direction)
-    
+
     async def turn_right(self):
         print("Turn right")
         self.turn_direction = 1
@@ -112,7 +114,39 @@ class LocalNavigator:
         await self.node.set_variables(self.motor(-self.motor_speed, -self.motor_speed))
         self.is_alter = [] # reset
 
-    async def avoid(self):
+    async def follow_global_path2(self, angle):
+        print("given angle: ",angle)
+        if abs(angle) <= self.val_to_angle(10):
+            self.motor_speed = 200
+            await self.forward()
+        elif angle <= -self.val_to_angle(30):
+            self.motor_speed = 80
+            await self.turn_left()
+        elif angle <= self.val_to_angle(30):
+            self.motor_speed = 80
+            await self.turn_right()
+        elif angle > -self.val_to_angle(30):
+            self.motor_speed = 100
+            await self.turn_left()
+        elif angle < self.val_to_angle(30):
+            self.motor_speed = 100
+            await self.turn_right()
+
+    async def follow_global_path(self, angle):
+        print("given angle: ",angle)
+
+        self.motor_speed = 100
+        omega = -angle
+        await self.forwardRun(omega)
+
+
+    async def forwardRun(self,omega):
+        self.turn_direction = 0
+        await self.node.set_variables(self.motor(self.motor_speed-int(omega), self.motor_speed+int(omega)))
+        self.is_alter = [] # reset
+
+
+    async def avoid(self, angle):
         front_prox_horizontal = self.sensor_vals[:5]
         back_prox_horizontal = self.sensor_vals[5:]
 
@@ -123,7 +157,8 @@ class LocalNavigator:
 
         if all([x < self.dist_threshold for x in front_prox_horizontal]): # no obstacle
             print("No obstacle")
-            await self.forward()
+            # await self.forward()
+            await self.follow_global_path(angle)
             self.time = 0
             self.deadlock_flag = False # free to deadlock
             self.is_alter = [] # reset
@@ -133,7 +168,7 @@ class LocalNavigator:
                 print("Front obstacle")
                 if front_prox_horizontal[2] > 4000: # too close to the obstacle
                     await self.backward()
-                
+
                 if (front_prox_horizontal[1] - front_prox_horizontal[3]) < -100: # close to right
                     await self.turn_left()
                 elif (front_prox_horizontal[1] - front_prox_horizontal[3]) < 100: # close to left
@@ -159,22 +194,21 @@ class LocalNavigator:
                 self.time = 0
         else: # in deadlock situation
             await self.turn_right() # turn right until there is no obstacle
-        
+
         # compute Thymio's rotated direction (angle)
         self.compute_angle()
 
         # check whether Thymio stuck in deadlock
         await self.check_deadlock()
 
-    async def run(self):
-        while True:
-            # print(chr(27) + "[2J") # clear terminal
-            # await self.client.sleep(0.1)
-            print("===============================================")
-            self.sensor_vals = list(self.node['prox.horizontal'])
-            await self.avoid()
+    async def run(self, angle):
+        # print(chr(27) + "[2J") # clear terminal
+        # await self.client.sleep(0.1)
+        print("===============================================")
+        self.sensor_vals = list(self.node['prox.horizontal'])
+        await self.avoid(angle)
 
-if __name__ == "__main__":
-    local_naviagtor = LocalNavigator()
-    aw(local_naviagtor.run())
-    aw(local_naviagtor.node.unlock())
+# if __name__ == "__main__":
+#     local_naviagtor = LocalNavigator()
+#     aw(local_naviagtor.run())
+#     aw(local_naviagtor.node.unlock())

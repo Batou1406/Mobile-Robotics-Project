@@ -1,72 +1,71 @@
-#main file for making the project work
-"""
-initialisation
-"""
-#librairy
 from VisionClass import VisionClass
 from GlobalMapClass import GlobalMapClass
 import ShorthestPath
 from KalmanFilterClass import KalmanFilterClass
-import MotionClass
+from LocalNavigator import LocalNavigator
+import motionPlanning
+import numpy as np
+import matplotlib.pyplot as plt
+import cv2
+import time
+from tdmclient import ClientAsync, aw
 
-#flag
-kidnap=False
-bloqued=False
-reachedGoal=False
 
-#variables declaration
+mapSize=(139,90)
 globalMap=GlobalMapClass()
-vision=visionClass()
+globalMap.setMapSize(mapSize[0],mapSize[1])
 kalmanFilter=KalmanFilterClass()
-input=np.matrix([[0],[0],[0]])
-timeStep=0
-measurement=None
-angleToGoal=None
+vision=VisionClass(mapSize, handCalibration=True)
+robot=LocalNavigator()
 
-#Vision initialisation
+
+flag=False
 vision.initialize()
+time.sleep(5) #to get the of the camera done
 
-#Kalman filter initialisation
-kalmanFilter.setState(vision.robotDetection())
+while(not flag):
+    flag=True
+    vision.update()
+    flag&=vision.Size()
+    flag&=globalMap.setRobot(vision.robotDetection())
+    flag&=globalMap.setGoal(vision.goalDetection())
+    globalMap.setObstacles(vision.obstaclesDetection(True))
+    plt.imshow(cv2.cvtColor(vision.imageDraw,cv2.COLOR_BGR2RGB))
 
-#map initialisation
-gloablMap.mapSize(vision.height, vision.width)
-globalMap.setPos(kalmanFilter.x)
-globalMap.setGoal(vision.goalDetection())
-globalMap.setObstacles(vision.obstaclesDetection())
-
-#Shorthest path computation
-gloablMap.setPath(ShorthestPath.aStar(globalMap.getObstacles(),gloablMap.getMapSize()[0],
-                                      gloablMap.getMapSize()[1], gloablMap.getPos(),
-                                      globalMap.getGoal()))
-
-
-
-"""
-Main Loop
-"""
-while(not(reachedGoal)):
-    # get robot position
-    kalmanFilter.predict(input, timeStep)
-    measurement=vision.robotDetection()
-    if(measurement):
-        kalmanFilter.update(measurement)
-    globalMap.setPos(kalmanFilter.x)
-
-    #compute and apply input
+route=ShorthestPath.astar(globalMap.getObstacles(),globalMap.getMapSize()[0], globalMap.getMapSize()[1],
+                          globalMap.getRobot(), globalMap.getGoal())
+globalMap.setPath(route)
 
 
-    # re-initialise if bloqued or kidnapp
-    if(bloqued or kidnap):
-        vision.initialize()
-        gloablMap.mapSize(vision.height, vision.width)
-        globalMap.setPos(vision.robotDetection())
-        globalMap.setGoal(vision.goalDetection())
-        globalMap.setObstacles(vision.obstaclesDetection())
-        gloablMap.setPath(ShorthestPath.aStar(globalMap.getObstacles(),gloablMap.getMapSize()[0],
-                                              gloablMap.getMapSize()[1], gloablMap.getPos(),
-                                              globalMap.getGoal()))
+x_coords = []
+y_coords = []
+for i in (range(0,len(route))):
+    x = route[i][0]
+    y = route[i][1]
+    x_coords.append(x)
+    y_coords.append(y)
 
-    #check if goal is reached
-    if(round(globalMap.robot) == round(gloablMap.goal)):
-        reachedGoal=True
+# plot map and path
+fig, ax = plt.subplots(figsize=(20,20))
+ax = plt.gca()
+ax.invert_yaxis()
+ax.imshow(vision.obstaclesDetection(False), cmap=plt.cm.Dark2)
+ax.imshow(globalMap.getObstacles(), cmap=plt.cm.Dark2, alpha=0.3)
+ax.scatter(globalMap.getRobot()[0],globalMap.getRobot()[1], marker = "*", color = "yellow", s = 200)
+ax.scatter(globalMap.getGoal()[0],globalMap.getGoal()[1], marker = "*", color = "red", s = 200)
+ax.plot(y_coords,x_coords, color = "black")
+plt.show()
+
+
+cv2.startWindowThread()
+cv2.imshow('Robot', vision.imageDraw)
+
+while(True):
+    vision.update()
+    globalMap.setRobot(vision.robotDetection())
+    aw(robot.run(motionPlanning.getMotionAngle(globalMap.getPath(),globalMap.getRobot())))
+    image = vision.imageDraw
+    for i in range(len(x_coords)):
+        cv2.circle(image, (int(x_coords[i]*vision.ratioX/vision.gridX + vision.cornerX), int(y_coords[i]*vision.ratioY/vision.gridY + vision.cornerY)), 5, (0, 0, 255), 2)
+    cv2.imshow('Robot', image)
+    cv2.waitKey(1)
