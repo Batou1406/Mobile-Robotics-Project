@@ -20,12 +20,21 @@ class GlobalMapClass(object):
         self.mapSize=[0,0]
 
     def setRobot(self, robotPos):
-        #robotPos as [x,y,alpha]
-        self.robot=robotPos
+        if(robotPos is not False):
+            #robotPos as [x,y,aplha] coordinate
+            if(robotPos[2]>8):#ie, pos is available but not the angle (outside 2pi)
+                self.robot=[robotPos[0], robotPos[1], self.robot[2]]
+            else:
+                self.robot=robotPos
+            return True
+        return False
 
     def setGoal(self, goalPos):
-        #goalPos as [x,y] coordinate
-        self.goal=goalPos
+        if(goalPos is not False):
+            #goalPos as [x,y] coordinate
+            self.goal=goalPos
+            return True
+        return False
 
     def setPath(self, pathList):
         #pathList contains a list of (x,y) coordinates

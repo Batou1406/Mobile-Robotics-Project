@@ -7,7 +7,7 @@ def heuristic(a, b):
 
 def astar(obstaclesGrid, height, width, start, goal):
     start=(start[1],start[0])
-    goal= (goal[1],goal[0])
+    goal=(goal[1],goal[0])
     array=obstaclesGrid
     neighbors=[(0,1),(0,-1),(1,0),(-1,0),(1,1),(1,-1),(-1,1),(-1,-1)]
     close_set=set()
