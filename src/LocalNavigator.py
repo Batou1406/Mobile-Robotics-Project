@@ -112,7 +112,7 @@ class LocalNavigator:
         await self.node.set_variables(self.motor(-self.motor_speed, -self.motor_speed))
         self.is_alter = [] # reset
 
-    async def avoid(self):
+    async def avoid(self, angle):
         front_prox_horizontal = self.sensor_vals[:5]
         back_prox_horizontal = self.sensor_vals[5:]
 
@@ -123,7 +123,16 @@ class LocalNavigator:
 
         if all([x < self.dist_threshold for x in front_prox_horizontal]): # no obstacle
             print("No obstacle")
-            await self.forward()
+            # await self.forward()
+            if angle > 1e-3:
+                self.motor_speed = 100
+                await self.turn_right()
+            elif angle < 1e-3:
+                self.motor_speed = 100
+                await self.turn_left()
+            else:
+                self.motor_speed = 200
+                await self.forward()
             self.time = 0
             self.deadlock_flag = False # free to deadlock
             self.is_alter = [] # reset
@@ -166,15 +175,14 @@ class LocalNavigator:
         # check whether Thymio stuck in deadlock
         await self.check_deadlock()
 
-    async def run(self):
-        while True:
-            # print(chr(27) + "[2J") # clear terminal
-            # await self.client.sleep(0.1)
-            print("===============================================")
-            self.sensor_vals = list(self.node['prox.horizontal'])
-            await self.avoid()
+    async def run(self, angle):
+        # print(chr(27) + "[2J") # clear terminal
+        # await self.client.sleep(0.1)
+        print("===============================================")
+        self.sensor_vals = list(self.node['prox.horizontal'])
+        await self.avoid(angle)
 
-if __name__ == "__main__":
-    local_naviagtor = LocalNavigator()
-    aw(local_naviagtor.run())
-    aw(local_naviagtor.node.unlock())
+# if __name__ == "__main__":
+#     local_naviagtor = LocalNavigator()
+#     aw(local_naviagtor.run())
+#     aw(local_naviagtor.node.unlock())
