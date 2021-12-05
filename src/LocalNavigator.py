@@ -15,6 +15,7 @@ class LocalNavigator:
         self.motor_speed = 200
         self.sensor_vals = list(self.node['prox.horizontal'])
         self.verbose = True # whether to print status message or not
+        self.threshold = self.val_to_angle(6) # threshold value for global path (given angle)
         self.angle = self.val_to_angle(0) # the current rotated angle of Thymio
         self.cumulative_angle = self.val_to_angle(0) # the cumulative rotated angles
         self.turn_direction = 1 # turn right: 1, turn left: -1
@@ -79,6 +80,7 @@ class LocalNavigator:
             self.motor_speed = 30
             self.omega = 13
 
+
     async def check_deadlock(self):
         if len(self.is_alter) > 20 and sum(self.is_alter) == 0: # turn right and turn left alternately over 20 times
             print(">>Deadlock")
@@ -112,6 +114,24 @@ class LocalNavigator:
         await self.node.set_variables(self.motor(-self.motor_speed, -self.motor_speed))
         self.is_alter = [] # reset
 
+    async def follow_global_path(angle):
+        if abs(angle) <= self.val_to_angle(10):
+            self.motor_speed = 200
+            await self.forward()
+        elif angle <= -self.val_to_angle(30):
+            self.motor_speed = 80
+            await self.turn_left()
+        elif angle <= val_to_angle(30):
+            self.motor_speed = 80
+            await self.turn_right()
+        elif angle > -val_to_angle(30):
+            self.motor_speed = 100
+            await self.turn_left()
+        elif angle < val_to_angle(30):
+            self.motor_speed = 100
+            await self.turn_right()
+
+
     async def avoid(self, angle):
         front_prox_horizontal = self.sensor_vals[:5]
         back_prox_horizontal = self.sensor_vals[5:]
@@ -124,15 +144,7 @@ class LocalNavigator:
         if all([x < self.dist_threshold for x in front_prox_horizontal]): # no obstacle
             print("No obstacle")
             # await self.forward()
-            if angle > 1e-3:
-                self.motor_speed = 100
-                await self.turn_right()
-            elif angle < 1e-3:
-                self.motor_speed = 100
-                await self.turn_left()
-            else:
-                self.motor_speed = 200
-                await self.forward()
+            await self.follow_global_path(angle)
             self.time = 0
             self.deadlock_flag = False # free to deadlock
             self.is_alter = [] # reset
