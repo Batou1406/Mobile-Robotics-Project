@@ -27,27 +27,30 @@ class KalmanFilterClass(object):
                           [0, 1, 0],
                           [0, 0, 1]])
 
-        self.Q=np.matrix([[1, 0, 0],
-                          [0, 1, 0],
-                          [0, 0, 1]])
+        self.Q=np.matrix([[10, 0, 0],
+                          [0, 10, 0],
+                          [0, 0, 10]])
 
-        self.R=np.matrix([[1, 0, 0],
-                          [0, 1, 0],
-                          [0, 0, 1]])
+        self.R=np.matrix([[10, 0, 0],
+                          [0, 10, 0],
+                          [0, 0, 10]])
 
         self.P=np.eye(self.A.shape[1])
 
     def setState(self, point):
-        self.x=point
+        self.x=np.matrix([[point[0]],
+                          [point[1]],
+                          [point[2]]])
 
     def predict(self, input, timeStep):
-        self.u = input
+        self.u = np.matrix([[input[0]],[input[1]],[input[2]]])
         self.x=np.dot(self.A, self.x) + np.dot((timeStep*self.B), self.u)
         # Calcul de la covariance de l'erreur
         self.P=np.dot(np.dot(self.A, self.P), self.A.T)+self.Q
-        return self.x
+        return [self.x[0],self.x[1],self.x[2]]
 
-    def update(self, z):
+    def update(self, meas):
+        z = np.matrix([[meas[0]],[meas[1]],[meas[2]]])
         # Calcul du gain de Kalman
         S=np.dot(self.H, np.dot(self.P, self.H.T))+self.R
         K=np.dot(np.dot(self.P, self.H.T), np.linalg.inv(S))
@@ -58,4 +61,4 @@ class KalmanFilterClass(object):
         I=np.eye(self.H.shape[1])
         self.P=(I-(K*self.H))*self.P
 
-        return self.x
+        return [self.x[0],self.x[1],self.x[2]]

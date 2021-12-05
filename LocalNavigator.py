@@ -135,8 +135,8 @@ class LocalNavigator:
     async def follow_global_path(self, angle):
         print("given angle: ",angle)
 
-        self.motor_speed = 100
-        omega = -angle
+        self.motor_speed = 50-abs(int(angle))
+        omega = -int(angle)
         await self.forwardRun(omega)
 
 
@@ -207,6 +207,7 @@ class LocalNavigator:
         print("===============================================")
         self.sensor_vals = list(self.node['prox.horizontal'])
         await self.avoid(angle)
+        return self.motor_speed, int(-angle/2)
 
 # if __name__ == "__main__":
 #     local_naviagtor = LocalNavigator()

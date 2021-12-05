@@ -130,7 +130,7 @@ class VisionClass(object):
             goalX, goalY=self.pixelToCM(points[0][0], points[0][1]) #goal position in x,y form
             self.goalX=goalX
             self.goalY=goalY
-            return [goalX, goalY]
+            return [points[0][0], points[0][1]]
         else:
             print("Warning: No goal found, take another picture.")
             self.goalX=0
@@ -166,7 +166,7 @@ class VisionClass(object):
                 cv2.arrowedLine(self.imageDraw,(points[0][0], points[0][1]),(int(points[0][0]+30*np.cos(theta)),
                                 int(points[0][1]+30*np.sin(theta))),color=(0, 255, 0),thickness=3, tipLength=0.2)
             thymio_x_cm, thymio_y_cm = self.pixelToCM(points[0][0], points[0][1])
-            return [thymio_x_cm, thymio_y_cm, theta]
+            return [points[0][0], points[0][1], theta]
         else:
             print("Warning: No Robot found, take another picture.")
             return False
@@ -191,7 +191,7 @@ class VisionClass(object):
         map_clean = cv2.morphologyEx(map_binary, cv2.MORPH_OPEN, kernel_morph)
 
         kernel_erode = np.ones((10,10),np.uint8) #60,60
-        kernel_dilate = np.ones((30,30),np.uint8) #140,140
+        kernel_dilate = np.ones((60,60),np.uint8) #140,140
         map_occupancy = cv2.erode(map_clean, kernel_erode, iterations=1)
         if(expend):
             map_occupancy = cv2.dilate(map_occupancy, kernel_dilate, iterations=1)
@@ -205,14 +205,14 @@ class VisionClass(object):
         width=self.gridX
         height=self.gridY # Size of the grid
 
-        occupancy_grid = np.zeros((height,width))
+        #occupancy_grid = np.zeros((height,width))
+        occupancy_grid = np.zeros((478,638))
         nx=self.ratioX/width
         ny=self.ratioY/height
 
-        for i in range(height):
-            for j in range(width):
-                result = np.sum(map_occupancy[round(nx*i+self.cornerX):round(nx*(i+1)+self.cornerX),
-                                              round(ny*j+self.cornerY):round(ny*(j+1)+self.cornerY)])
+        for i in range(478):
+            for j in range(638):
+                result = np.sum(map_occupancy[i,j])
                 if result > 0 :
                     occupancy_grid[i,j] = 1
 
