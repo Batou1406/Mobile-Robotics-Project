@@ -15,3 +15,34 @@ def getMotionAngle(path, robot):
         return (180*(angleToGoal-robot[2]))/np.pi
     else:
         return ((180*(angleToGoal-robot[2]))/np.pi-360)
+    
+    
+def angleController(path, robot, error_terms):   
+    # find closest point
+    min_dist = 10000
+    for i in range(len(path)):
+        dist=np.linalg.norm(path[i]-robot)
+        if (dist<min_dist):
+            min_dist=dist
+            index=i
+    
+    # determine if robot is left or right of path
+    path_vect=[path[index][0]-path[index+1][0],path[index][1]-path[index+1][1]]
+    robot_vect=[path[index][0]-robot[0],path[index][1]-robot[1]]
+    angle = np.arccos(np.dot(path_vect, robot_vect))
+    
+    # choose correction direction
+    if (angle>180):
+        error_terms.append(dist)
+    else:
+        error_terms.append(-dist)
+        
+    # PID gains (to tune)
+    Kp = 10
+    Ki = 0.1
+    Kd = 1
+        
+    # get angle correction value (PID controller)
+    angle_correction=Kp*error_terms[-1]+Ki*sum(error_terms)+Kd*(error_terms[-1]-error_terms[-2])
+    
+    return angle_correction, error_terms
