@@ -40,9 +40,8 @@ class GlobalMapClass(object):
     def setObstacles(self, obstacles):
         #pathObstacles contains a list of (x,y) coordinates
         self.obstaclesGrid=obstacles
-        self.mapSize[0]=np.size(obstacles,0)
-        self.mapSize[1]=np.size(obstacles,1)
-        print(self.mapSize)
+        self.mapSize[0]=np.size(obstacles,1)
+        self.mapSize[1]=np.size(obstacles,0)
 
     def getPath(self):
         return self.path

@@ -40,7 +40,7 @@ if counter >= 10:
 kalmanFilter.setState(globalMap.getRobot())
 
 print("Astar running")
-route=ShorthestPath.astar(globalMap.getObstacles(),640, 480,
+route=ShorthestPath.astar(globalMap.getObstacles(),globalMap.getMapSize()[0], globalMap.getMapSize()[1],
                           globalMap.getRobot(), globalMap.getGoal())
 globalMap.setPath(route)
 
@@ -97,7 +97,7 @@ while(notGoal):
 
     motorSpeed, omega = aw(robot.run(motionPlanning.getMotionAngle(globalMap.getPath(),globalMap.getRobot()), False))
 
-    input=[motorSpeed*np.cos(globalMap.getRobot()[2])/2,motorSpeed*np.sin(globalMap.getRobot()[2])/2, (omega*np.pi/180)]
+    input=[motorSpeed*np.cos(globalMap.getRobot()[2])/3,motorSpeed*np.sin(globalMap.getRobot()[2])/3, -6*(omega*np.pi/180)]
 
     image = vision.imageDraw
     cv2.circle(image, (int(globalMap.getGoal()[0]), int(globalMap.getGoal()[1])), 15, (0, 0, 255), 1)

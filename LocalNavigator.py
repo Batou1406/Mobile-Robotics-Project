@@ -116,8 +116,8 @@ class LocalNavigator:
 
 
     async def follow_global_path(self, angle, stop):
-        omega = -int(4*angle)
-        self.motor_speed = 150-abs(omega)
+        omega = -int(3*angle)
+        self.motor_speed = 100-abs(omega)
         if self.motor_speed < 0:
             self.motor_speed = 0
         if omega>75:
