@@ -182,7 +182,7 @@ class LocalNavigator:
         self.sensor_vals = list(self.node['prox.horizontal'])
         await self.avoid(angle)
 
-if __name__ == "__main__":
-    local_naviagtor = LocalNavigator()
-    aw(local_naviagtor.run())
-    aw(local_naviagtor.node.unlock())
+# if __name__ == "__main__":
+#     local_naviagtor = LocalNavigator()
+#     aw(local_naviagtor.run())
+#     aw(local_naviagtor.node.unlock())
