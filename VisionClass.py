@@ -153,7 +153,7 @@ class VisionClass(object):
             robotX,robotY=self.pixelToCM(points[0][0], points[0][0])
             theta=10
             if(len(points)>1):
-                direction=[points[0][0]-points[1][0],points[0][1]-points[1][1]]
+                direction=[points[1][0]-points[0][0],points[1][1]-points[0][1]]
                 theta = np.arctan2(direction[1], direction[0])
                 cv2.arrowedLine(self.imageDraw,(points[0][0], points[0][1]),(int(points[0][0]+30*np.cos(theta)),
                                 int(points[0][1]+30*np.sin(theta))),color=(0, 255, 0),thickness=3, tipLength=0.2)
