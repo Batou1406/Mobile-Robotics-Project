@@ -47,8 +47,8 @@ class GlobalMapClass(object):
     def setMapSize(self, height, width):
         self.mapSize=[height,width]
 
-    def getPath(self, i):
-        return self.path[i]
+    def getPath(self):
+        return self.path
 
     def getObstacles(self):
         return self.obstaclesGrid
