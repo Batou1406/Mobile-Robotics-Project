@@ -4,6 +4,14 @@ import heapq
 def heuristic(a, b):
     return np.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2)
 
+def redressRoad(route):
+    data=[]
+    for i in (range(0,len(route))):
+        x = route[i][0]
+        y = route[i][1]
+        data.append((y,x))
+    return data
+
 
 def astar(obstaclesGrid, height, width, start, goal):
     start=(start[1],start[0])
@@ -23,7 +31,7 @@ def astar(obstaclesGrid, height, width, start, goal):
             while current in came_from:
                 data.append(current)
                 current=came_from[current]
-            return data
+            return redressRoad(data)
         close_set.add(current)
 
         for i, j in neighbors:
