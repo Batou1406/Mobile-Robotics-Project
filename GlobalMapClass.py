@@ -22,10 +22,7 @@ class GlobalMapClass(object):
     def setRobot(self, robotPos):
         if(robotPos is not False):
             #robotPos as [x,y,aplha] coordinate
-            if(robotPos[2]>8):#ie, pos is available but not the angle (outside 2pi)
-                self.robot=[robotPos[0], robotPos[1], self.robot[2]]
-            else:
-                self.robot=robotPos
+            self.robot=robotPos
             return True
         return False
 
@@ -43,9 +40,9 @@ class GlobalMapClass(object):
     def setObstacles(self, obstacles):
         #pathObstacles contains a list of (x,y) coordinates
         self.obstaclesGrid=obstacles
-
-    def setMapSize(self, height, width):
-        self.mapSize=[height,width]
+        self.mapSize[0]=np.size(obstacles,0)
+        self.mapSize[1]=np.size(obstacles,1)
+        print(self.mapSize)
 
     def getPath(self):
         return self.path

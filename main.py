@@ -10,38 +10,41 @@ import cv2
 import time
 from tdmclient import ClientAsync, aw
 
-
-mapSize=(70,45)
+print("Variables declaration")
 globalMap=GlobalMapClass()
-globalMap.setMapSize(mapSize[0],mapSize[1])
 kalmanFilter=KalmanFilterClass()
-vision=VisionClass(mapSize, handCalibration=True)
+vision=VisionClass(handCalibration=True)
 robot=LocalNavigator()
 
-
+print("Vision initialize and calibration")
 flag=False
 vision.initialize()
 time.sleep(5) #to get the of the camera done
 
-while(not flag):
+print("Map initialization")
+counter=0
+while(not flag and counter < 10):
     flag=True
     vision.update()
     flag&=vision.Size()
-    fig2, ax2 = plt.subplots(figsize=(20,20))
-    ax2.imshow(vision.imageDraw)
     flag&=globalMap.setRobot(vision.robotDetection())
     flag&=globalMap.setGoal(vision.goalDetection())
     globalMap.setObstacles(vision.obstaclesDetection(True))
-    #plt.imshow(cv2.cvtColor(vision.imageDraw,cv2.COLOR_BGR2RGB))
+    counter+=1
+    if(not flag):
+        time.sleep(1)
+
+if counter >= 10:
+    print("Failed map initialization")
 
 kalmanFilter.setState(globalMap.getRobot())
 
 print("Astar running")
-route=ShorthestPath.astar(globalMap.getObstacles(),638, 478,
+route=ShorthestPath.astar(globalMap.getObstacles(),640, 480,
                           globalMap.getRobot(), globalMap.getGoal())
 globalMap.setPath(route)
-print("Astar done")
 
+print("Display route")
 if(route is not False):
     x_coords = []
     y_coords = []
@@ -64,6 +67,8 @@ if(route is not False):
     plt.show()
 
 
+print("Start navigation")
+
 cv2.startWindowThread()
 cv2.imshow('Robot', vision.imageDraw)
 cv2.resizeWindow('Robot', 2000, 1200)
@@ -82,26 +87,33 @@ while(notGoal):
     vision.update()
     meas = vision.robotDetection()
     if meas is not False:
-        if abs(meas[0]-globalMap.getRobot()[0])+abs(meas[1]-globalMap.getRobot()[1]) < 30 :
-            robotPos=kalmanFilter.update(meas)
+        robotPos=kalmanFilter.update(meas)
 
     globalMap.setRobot(robotPos)
-    motorSpeed, omega = aw(robot.run(motionPlanning.getMotionAngle(globalMap.getPath(),globalMap.getRobot())))
-    input=[motorSpeed*np.cos(globalMap.getRobot()[2])/8,motorSpeed*np.sin(globalMap.getRobot()[2])/8, 0]
+
+    if  abs(globalMap.getGoal()[0]-globalMap.getRobot()[0])+abs(globalMap.getGoal()[1]-globalMap.getRobot()[1]) < 30:
+        robot.run(0, True)
+        notGoal = False
+
+    motorSpeed, omega = aw(robot.run(motionPlanning.getMotionAngle(globalMap.getPath(),globalMap.getRobot()), False))
+
+    input=[motorSpeed*np.cos(globalMap.getRobot()[2])/2,motorSpeed*np.sin(globalMap.getRobot()[2])/2, (omega*np.pi/180)]
+
     image = vision.imageDraw
-    cv2.circle(image, (int(globalMap.getRobot()[0]), int(globalMap.getRobot()[1])), 25, (255, 0, 0), 2)
+    cv2.circle(image, (int(globalMap.getGoal()[0]), int(globalMap.getGoal()[1])), 15, (0, 0, 255), 1)
+    cv2.circle(image, (int(globalMap.getRobot()[0]), int(globalMap.getRobot()[1])), 15, (255, 0, 0), 1)
     cv2.arrowedLine(image,(int(globalMap.getRobot()[0]), int(globalMap.getRobot()[1])),(int(globalMap.getRobot()[0]+30*np.cos(globalMap.getRobot()[2])),
-                    int(globalMap.getRobot()[1]+30*np.sin(globalMap.getRobot()[2]))),color=(255, 0, 0),thickness=4, tipLength=0.2)
+                    int(globalMap.getRobot()[1]+30*np.sin(globalMap.getRobot()[2]))),color=(255, 0, 0),thickness=1, tipLength=0.2)
     for i in range(len(x_coords)):
         cv2.circle(image, (x_coords[i], y_coords[i]), 1, (0, 0, 255), 2)
-
     resized_up = cv2.resize(vision.image, up_points, interpolation= cv2.INTER_LINEAR)
     cv2.putText(resized_up, "angle{:d}, robot : x {:d}, y {:d}".format(int(motionPlanning.getMotionAngle(globalMap.getPath(),globalMap.getRobot())),int(globalMap.getRobot()[0]),int(globalMap.getRobot()[1])),(5, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1, cv2.LINE_AA)
     cv2.imshow('Robot', resized_up)
     cv2.waitKey(1)
 
-    if  abs(globalMap.getGoal()[0]-globalMap.getRobot()[0])+abs(globalMap.getGoal()[1]-globalMap.getRobot()[1]) < 10:
-        notGoal = True
 
+    time.sleep(0.1)
+
+print("Goal reached")
+time.sleep(15)
 vision.finish()
-print("YEAAAAAH !!! ")

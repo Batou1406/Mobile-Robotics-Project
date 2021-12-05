@@ -27,13 +27,13 @@ class KalmanFilterClass(object):
                           [0, 1, 0],
                           [0, 0, 1]])
 
-        self.Q=np.array([[50, 0, 0],
-                          [0, 50, 0],
-                          [0, 0, 200]])
+        self.Q=np.array([[10, 0, 0],
+                          [0, 10, 0],
+                          [0, 0, 10]])
 
-        self.R=np.array([[50, 0, 0],
-                          [0, 50, 0],
-                          [0, 0, 50]])
+        self.R=np.array([[10, 0, 0],
+                          [0, 10, 0],
+                          [0, 0, 10]])
 
         self.P=np.eye(self.A.shape[1])
 

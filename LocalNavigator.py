@@ -114,36 +114,34 @@ class LocalNavigator:
         await self.node.set_variables(self.motor(-self.motor_speed, -self.motor_speed))
         self.is_alter = [] # reset
 
-    async def follow_global_path2(self, angle):
-        if abs(angle) <= self.val_to_angle(10):
-            self.motor_speed = 200
-            await self.forward()
-        elif angle <= -self.val_to_angle(30):
-            self.motor_speed = 80
-            await self.turn_left()
-        elif angle <= self.val_to_angle(30):
-            self.motor_speed = 80
-            await self.turn_right()
-        elif angle > -self.val_to_angle(30):
-            self.motor_speed = 100
-            await self.turn_left()
-        elif angle < self.val_to_angle(30):
-            self.motor_speed = 100
-            await self.turn_right()
 
-    async def follow_global_path(self, angle):
-        self.motor_speed = 50-abs(int(angle))
-        omega = -int(angle)
-        await self.forwardRun(omega)
+    async def follow_global_path(self, angle, stop):
+        omega = -int(4*angle)
+        self.motor_speed = 150-abs(omega)
+        if self.motor_speed < 0:
+            self.motor_speed = 0
+        if omega>75:
+            omega=75
+
+        if stop:
+            await self.stop()
+        else:
+            await self.forwardRun(omega)
 
 
     async def forwardRun(self,omega):
         self.turn_direction = 0
-        await self.node.set_variables(self.motor(self.motor_speed-int(omega), self.motor_speed+int(omega)))
+        await self.node.set_variables(self.motor(self.motor_speed-omega, self.motor_speed+omega))
+        self.is_alter = [] # reset
+
+    async def stop(self):
+        self.turn_direction = 0
+        self.motor_speed=0
+        await self.node.set_variables(self.motor(self.motor_speed, self.motor_speed))
         self.is_alter = [] # reset
 
 
-    async def avoid(self, angle):
+    async def avoid(self, angle, stop):
         front_prox_horizontal = self.sensor_vals[:5]
         back_prox_horizontal = self.sensor_vals[5:]
 
@@ -154,7 +152,7 @@ class LocalNavigator:
 
         if all([x < self.dist_threshold for x in front_prox_horizontal]): # no obstacle
             # await self.forward()
-            await self.follow_global_path(angle)
+            await self.follow_global_path(angle, stop)
             self.time = 0
             self.deadlock_flag = False # free to deadlock
             self.is_alter = [] # reset
@@ -197,13 +195,6 @@ class LocalNavigator:
         # check whether Thymio stuck in deadlock
         await self.check_deadlock()
 
-    async def run(self, angle):
-        # print(chr(27) + "[2J") # clear terminal
-        # await self.client.sleep(0.1)
-        await self.avoid(angle)
+    async def run(self, angle, stop):
+        await self.avoid(angle, stop)
         return self.motor_speed, int(-angle/2)
-
-# if __name__ == "__main__":
-#     local_naviagtor = LocalNavigator()
-#     aw(local_naviagtor.run())
-#     aw(local_naviagtor.node.unlock())

@@ -3,15 +3,11 @@ import numpy as np
 import calibrate
 
 class VisionClass(object):
-    def __init__(self,mapSize, handCalibration):
+    def __init__(self, handCalibration):
         self.ratioX=0
         self.ratioY=0
         self.cornerX=0
         self.cornerY=0
-        self.gridX=mapSize[0]
-        self.gridY=mapSize[1]
-        self.goalX=0
-        self.goalY=0
         self.image=None
         self.imageDraw=None
         self.VideoCap=None
@@ -23,11 +19,6 @@ class VisionClass(object):
         self.HSVR=True
         self.handCalibration=handCalibration
         self.tresh=60
-        self.map=None
-        self.mask=None
-        self.erode=None
-        self.binary=None
-        self.gray=None
 
     def initialize(self):
         if(self.handCalibration):
@@ -96,17 +87,10 @@ class VisionClass(object):
         ret, frame=self.VideoCap.read()
         self.image=frame
         self.imageDraw=frame
-        cv2.rectangle(self.imageDraw, (self.cornerX,self.cornerY), pt2=(self.cornerX+self.ratioX,self.cornerY+self.ratioY), color=(255,0,0), thickness=10)
-        cv2.circle(self.imageDraw, (self.goalX, self.goalY), 10, (0, 0, 255), 2)
+        cv2.rectangle(self.imageDraw, (self.cornerX,self.cornerY), pt2=(self.cornerX+self.ratioX,self.cornerY+self.ratioY), color=(255,0,0), thickness=1)
 
     def display(self):
         cv2.imshow('Image Draw', self.imageDraw)
-
-    def pixelToCM(self, x_pixel, y_pixel):
-        x_cm=round(((x_pixel-self.cornerX)*self.gridX)/self.ratioX)
-        y_cm=round(((y_pixel-self.cornerY)*self.gridY)/self.ratioY)
-        return x_cm, y_cm
-
 
     def goalDetection(self):
         filter=cv2.blur(self.image, (3, 3))
@@ -127,14 +111,8 @@ class VisionClass(object):
                 points.append(np.array([int(x), int(y)]))
         if (len(points)>0):
             cv2.circle(self.imageDraw, (points[0][0], points[0][1]), 10, (0, 0, 255), 2)
-            goalX, goalY=self.pixelToCM(points[0][0], points[0][1]) #goal position in x,y form
-            self.goalX=goalX
-            self.goalY=goalY
             return [points[0][0], points[0][1]]
         else:
-            print("Warning: No goal found, take another picture.")
-            self.goalX=0
-            self.goalY=0
             return False
 
 
@@ -156,19 +134,14 @@ class VisionClass(object):
                 ((x, y), rayon)=cv2.minEnclosingCircle(element)
                 points.append(np.array([int(x), int(y)]))
 
-        if (len(points)>0):
-            cv2.circle(self.imageDraw, (points[0][0], points[0][1]), 15, (0, 255, 0), 2)
-            robotX,robotY=self.pixelToCM(points[0][0], points[0][0])
-            theta=10
-            if(len(points)>1):
-                direction=[points[1][0]-points[0][0],points[1][1]-points[0][1]]
-                theta = np.arctan2(direction[1], direction[0])
-                cv2.arrowedLine(self.imageDraw,(points[0][0], points[0][1]),(int(points[0][0]+30*np.cos(theta)),
-                                int(points[0][1]+30*np.sin(theta))),color=(0, 255, 0),thickness=3, tipLength=0.2)
-            thymio_x_cm, thymio_y_cm = self.pixelToCM(points[0][0], points[0][1])
+        if (len(points)>1):
+            cv2.circle(self.imageDraw, (points[0][0], points[0][1]), 10, (0, 255, 0), 1)
+            direction=[points[1][0]-points[0][0],points[1][1]-points[0][1]]
+            theta = np.arctan2(direction[1], direction[0])%(2*np.pi)
+            cv2.arrowedLine(self.imageDraw,(points[0][0], points[0][1]),(int(points[0][0]+30*np.cos(theta)),
+                            int(points[0][1]+30*np.sin(theta))),color=(0, 255, 0),thickness=1, tipLength=0.2)
             return [points[0][0], points[0][1], theta]
         else:
-            print("Warning: No Robot found, take another picture.")
             return False
 
 
@@ -191,7 +164,7 @@ class VisionClass(object):
         map_clean = cv2.morphologyEx(map_binary, cv2.MORPH_OPEN, kernel_morph)
 
         kernel_erode = np.ones((10,10),np.uint8) #60,60
-        kernel_dilate = np.ones((60,60),np.uint8) #140,140
+        kernel_dilate = np.ones((70,70),np.uint8) #140,140
         map_occupancy = cv2.erode(map_clean, kernel_erode, iterations=1)
         if(expend):
             map_occupancy = cv2.dilate(map_occupancy, kernel_dilate, iterations=1)
@@ -202,16 +175,13 @@ class VisionClass(object):
     def obstaclesDetection(self, expend):
         map_occupancy=self.preprocessing(expend)
 
-        width=self.gridX
-        height=self.gridY # Size of the grid
+        width=np.size(map_occupancy,0)
+        height=np.size(map_occupancy,1)
 
-        #occupancy_grid = np.zeros((height,width))
-        occupancy_grid = np.zeros((478,638))
-        nx=self.ratioX/width
-        ny=self.ratioY/height
+        occupancy_grid = np.zeros((width,height))
 
-        for i in range(478):
-            for j in range(638):
+        for i in range(width):
+            for j in range(height):
                 result = np.sum(map_occupancy[i,j])
                 if result > 0 :
                     occupancy_grid[i,j] = 1
