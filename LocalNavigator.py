@@ -14,7 +14,7 @@ class LocalNavigator:
         self.dist_threshold = 2300 # 1600
         self.motor_speed = 200
         self.sensor_vals = list(self.node['prox.horizontal'])
-        self.verbose = True # whether to print status message or not
+        self.verbose = False # whether to print status message or not
         self.threshold = self.val_to_angle(6) # threshold value for global path (given angle)
         self.angle = self.val_to_angle(0) # the current rotated angle of Thymio
         self.cumulative_angle = self.val_to_angle(0) # the cumulative rotated angles
@@ -115,7 +115,6 @@ class LocalNavigator:
         self.is_alter = [] # reset
 
     async def follow_global_path2(self, angle):
-        print("given angle: ",angle)
         if abs(angle) <= self.val_to_angle(10):
             self.motor_speed = 200
             await self.forward()
@@ -133,8 +132,6 @@ class LocalNavigator:
             await self.turn_right()
 
     async def follow_global_path(self, angle):
-        print("given angle: ",angle)
-
         self.motor_speed = 50-abs(int(angle))
         omega = -int(angle)
         await self.forwardRun(omega)
@@ -156,7 +153,6 @@ class LocalNavigator:
         self.compute_motor_speed()
 
         if all([x < self.dist_threshold for x in front_prox_horizontal]): # no obstacle
-            print("No obstacle")
             # await self.forward()
             await self.follow_global_path(angle)
             self.time = 0
@@ -204,8 +200,6 @@ class LocalNavigator:
     async def run(self, angle):
         # print(chr(27) + "[2J") # clear terminal
         # await self.client.sleep(0.1)
-        print("===============================================")
-        self.sensor_vals = list(self.node['prox.horizontal'])
         await self.avoid(angle)
         return self.motor_speed, int(-angle/2)
 

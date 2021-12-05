@@ -66,17 +66,28 @@ if(route is not False):
 
 cv2.startWindowThread()
 cv2.imshow('Robot', vision.imageDraw)
+cv2.resizeWindow('Robot', 2000, 1200)
+
+up_width = 2000
+up_height = 1200
+up_points = (up_width, up_height)
+resized_up = cv2.resize(vision.imageDraw, up_points, interpolation= cv2.INTER_LINEAR)
+cv2.imshow('Robot', vision.imageDraw)
+cv2.resizeWindow('Robot', 1800, 1200)
+
 input=[0,0,0]
-while(True):
+notGoal = True
+while(notGoal):
     robotPos=kalmanFilter.predict(input,0.1)
     vision.update()
     meas = vision.robotDetection()
     if meas is not False:
-        robotPos=kalmanFilter.update(meas)
+        if abs(meas[0]-globalMap.getRobot()[0])+abs(meas[1]-globalMap.getRobot()[1]) < 30 :
+            robotPos=kalmanFilter.update(meas)
 
     globalMap.setRobot(robotPos)
     motorSpeed, omega = aw(robot.run(motionPlanning.getMotionAngle(globalMap.getPath(),globalMap.getRobot())))
-    #input=[motorSpeed*np.cos(globalMap.getRobot()[2]),motorSpeed*np.sin(globalMap.getRobot()[2]), omega]
+    input=[motorSpeed*np.cos(globalMap.getRobot()[2])/8,motorSpeed*np.sin(globalMap.getRobot()[2])/8, 0]
     image = vision.imageDraw
     cv2.circle(image, (int(globalMap.getRobot()[0]), int(globalMap.getRobot()[1])), 25, (255, 0, 0), 2)
     cv2.arrowedLine(image,(int(globalMap.getRobot()[0]), int(globalMap.getRobot()[1])),(int(globalMap.getRobot()[0]+30*np.cos(globalMap.getRobot()[2])),
@@ -84,6 +95,13 @@ while(True):
     for i in range(len(x_coords)):
         cv2.circle(image, (x_coords[i], y_coords[i]), 1, (0, 0, 255), 2)
 
-    cv2.putText(image, "angle{:d}, robot : x {:d}, y {:d}".format(int(motionPlanning.getMotionAngle(globalMap.getPath(),globalMap.getRobot())),int(globalMap.getRobot()[0]),int(globalMap.getRobot()[1])),(5, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1, cv2.LINE_AA)
-    cv2.imshow('Robot', image)
+    resized_up = cv2.resize(vision.image, up_points, interpolation= cv2.INTER_LINEAR)
+    cv2.putText(resized_up, "angle{:d}, robot : x {:d}, y {:d}".format(int(motionPlanning.getMotionAngle(globalMap.getPath(),globalMap.getRobot())),int(globalMap.getRobot()[0]),int(globalMap.getRobot()[1])),(5, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1, cv2.LINE_AA)
+    cv2.imshow('Robot', resized_up)
     cv2.waitKey(1)
+
+    if  abs(globalMap.getGoal()[0]-globalMap.getRobot()[0])+abs(globalMap.getGoal()[1]-globalMap.getRobot()[1]) < 10:
+        notGoal = True
+
+vision.finish()
+print("YEAAAAAH !!! ")
