@@ -35,6 +35,9 @@ class LocalNavigator:
         """
         self.is_alter = [] # for checking whether Thymio stuck in deadlock
         self.deadlock_flag = False # whether Thymio stuck in deadlock
+        self.reflected_sensor_vals = list(self.node['prox.ground.reflected']) # {0...1023}
+        self.height_threshold = 50
+        self.kidnap = False
 
     def get_outputs(self):
         return (self.angle, self.cumulative_angle, self.motor_speed)
@@ -80,6 +83,12 @@ class LocalNavigator:
             self.motor_speed = 30
             self.omega = 13
 
+    async def is_kidnap(self):
+        if self.verbose:
+            print("Sensor values (prox_ground_reflected): ", self.reflected_sensor_vals)
+        if all([x < self.height_threshold for x in self.reflected_sensor_vals]):
+            print(">>Kidnap")
+            self.kidnap = True
 
     async def check_deadlock(self):
         if len(self.is_alter) > 20 and sum(self.is_alter) == 0: # turn right and turn left alternately over 20 times
@@ -147,6 +156,9 @@ class LocalNavigator:
 
         self.print_sensor_values()
 
+        # check whether Thymio is kidnapping
+        self.is_kidnap()
+        
         # compute the proper motor speed according to the distance of obstacle
         self.compute_motor_speed()
 
