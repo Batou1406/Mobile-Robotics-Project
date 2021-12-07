@@ -25,7 +25,7 @@ def souris(event, x, y, flags, param):
 
 
 def calibration():
-    VideoCap=cv2.VideoCapture(0)
+    VideoCap=cv2.VideoCapture(1+cv2.CAP_DSHOW)
     cv2.namedWindow('Camera')
     cv2.setMouseCallback('Camera', souris)
     global frame

@@ -39,7 +39,7 @@ class VisionClass(object):
                 self.lowRobot=np.array([R1-25,R2-25,R3-25])
                 self.highRobot=np.array([R1+25,R2+25,R3+25])
 
-        self.VideoCap=cv2.VideoCapture(0)
+        self.VideoCap=cv2.VideoCapture(1+cv2.CAP_DSHOW)
         ret, frame=self.VideoCap.read()
         self.image=frame
 

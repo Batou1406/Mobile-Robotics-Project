@@ -103,8 +103,8 @@ class LocalNavigator:
             self.deadlock_flag = True
 
     async def turn_left(self):
-        print("Turn left")
         self.turn_direction = -1
+        self.omega = -self.omega
         self.start = time.time()
         await self.node.set_variables(self.motor(-self.motor_speed, self.motor_speed))
         self.end = time.time()
@@ -112,8 +112,8 @@ class LocalNavigator:
         self.is_alter.append(self.turn_direction)
 
     async def turn_right(self):
-        print("Turn right")
         self.turn_direction = 1
+
         self.start = time.time()
         await self.node.set_variables(self.motor(self.motor_speed, -self.motor_speed))
         self.end = time.time()
@@ -131,13 +131,13 @@ class LocalNavigator:
         self.is_alter = [] # reset
 
     async def follow_global_path(self, angle):
-        omega = -int(3*angle)
-        self.motor_speed = 100-abs(omega)
+        self.omega = -int(angle)
+        self.motor_speed = 180-abs(int(3*self.omega))
         if self.motor_speed < 0:
             self.motor_speed = 0
-        if omega>75:
-            omega=75
-        await self.forward(omega)
+        if self.omega>200:
+            self.omega=200
+        await self.forward(self.omega)
 
     async def stop(self):
         self.turn_direction = 0
@@ -161,8 +161,9 @@ class LocalNavigator:
 
         if all([x < self.dist_threshold for x in front_prox_horizontal]): # no obstacle
             if(self.resolvedObstacle):
+                self.motor_speed=180
                 await self.forward()
-                time.sleep(0.5)
+                await self.client.sleep(1)
             await self.follow_global_path(angle)
             self.time = 0
             self.deadlock_flag = False # free to deadlock
@@ -171,8 +172,9 @@ class LocalNavigator:
 
         if not self.deadlock_flag:
             if front_prox_horizontal[2] > self.dist_threshold: # front obstacle
+                if(not self.resolvedObstacle):
+                    print("Front obstacle")
                 self.resolvedObstacle = True
-                print("Front obstacle")
                 if front_prox_horizontal[2] > 4000: # too close to the obstacle
                     await self.backward()
 
@@ -188,13 +190,15 @@ class LocalNavigator:
                         await self.turn_right()
 
             elif any([x > self.dist_threshold for x in front_prox_horizontal[:2]]): # left obstacle
+                if(not self.resolvedObstacle):
+                    print("Left obstacle")
                 self.resolvedObstacle = True
-                print("Left obstacle")
                 await self.turn_right()
 
             elif any([x > self.dist_threshold for x in front_prox_horizontal[3:]]): # right obstacle
+                if(not self.resolvedObstacle):
+                    print("Right obstacle")
                 self.resolvedObstacle = True
-                print("Right obstacle")
                 await self.turn_left()
 
             elif any([x > self.dist_threshold for x in back_prox_horizontal]): # back obstacle
@@ -212,4 +216,4 @@ class LocalNavigator:
 
     async def run(self, angle):
         await self.avoid(angle)
-        return self.motor_speed, int(-angle/2), self.kidnap
+        return self.motor_speed, self.omega, self.kidnap

@@ -33,12 +33,11 @@ def mapInitialisation():
     globalMap.setPath(route)
 
 
-def displayRoute(route):
+def displayRoute(route,display=True):
     print("Display route")
+    x_coords = []
+    y_coords = []
     if(route is not False):
-        x_coords = []
-        y_coords = []
-
         for i in (range(0,len(route))):
             x = route[i][0]
             y = route[i][1]
@@ -46,6 +45,7 @@ def displayRoute(route):
             y_coords.append(y)
 
         # plot map and path
+    if(display):
         fig, ax = plt.subplots(figsize=(20,20))
         ax = plt.gca()
         ax.invert_yaxis()
@@ -60,9 +60,9 @@ def displayRoute(route):
 print("Variables declaration")
 globalMap=GlobalMapClass()
 kalmanFilter=KalmanFilterClass()
-vision=VisionClass(handCalibration=False)
+vision=VisionClass(handCalibration=True)
 robot=LocalNavigator()
-input=[0,0,0]
+motorInput=[0,0,0]
 goal = False
 
 #Display variables
@@ -90,7 +90,7 @@ cv2.resizeWindow('Robot', up_width, up_height)
 print("Start navigation")
 while(not goal):
     # get robot position with kalmanFilter
-    robotPos=kalmanFilter.predict(input,0.1)
+    robotPos=kalmanFilter.predict(motorInput,0.1)
     vision.update()
     meas = vision.robotDetection()
     if meas is not False:
@@ -103,7 +103,7 @@ while(not goal):
 
     # Make the robot move
     motorSpeed, omega, kidnap = aw(robot.run(motionPlanning.getMotionAngle(globalMap.getPath(),globalMap.getRobot())))
-    input=[motorSpeed*np.cos(globalMap.getRobot()[2])/4,motorSpeed*np.sin(globalMap.getRobot()[2])/4, -6*(omega*np.pi/180)]
+    motorInput=[motorSpeed*np.cos(globalMap.getRobot()[2])/3.2,motorSpeed*np.sin(globalMap.getRobot()[2])/3.2, -0.9*(omega*np.pi/180)]
 
     # Check if the robot was kidnapped
     if(kidnap):
@@ -111,7 +111,7 @@ while(not goal):
         aw(robot.stop())
         time.sleep(10)
         mapInitialisation()
-        x_coords, y_coords=displayRoute(globalMap.getPath())
+        x_coords, y_coords=displayRoute(globalMap.getPath(),False)
 
     # Displaying
     image = vision.imageDraw
