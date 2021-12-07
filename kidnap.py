@@ -1,22 +1,30 @@
 from tdmclient import ClientAsync, aw
 
-client = ClientAsync()
-node = aw(client.wait_for_node())
 
-aw(node.lock())
-aw(node.wait_for_variables())
+class KidNap:
+    def __init__(self):
+        self.client = ClientAsync()
+        self.node = aw(self.client.wait_for_node())
 
-dist_threshold = 50
-# sensor_vals = list(node['prox.ground.reflected'])
+        aw(self.node.lock())
+        aw(self.node.wait_for_variables())
+        self.dist_threshold = 70
+        self.sensor_vals = list(self.node['prox.ground.reflected'])
 
-async def is_kidnap():
-    print(list(node['prox.ground.reflected']))
-    if all([x < dist_threshold for x in node['prox.ground.reflected']]):
-        print("Kidnap")
+    async def is_kidnap(self):
+        # print(list(self.node['prox.ground.reflected']))
+        await self.client.wait_for_node()
+        self.sensor_vals = list(self.node['prox.ground.reflected'])
+        if all([x < self.dist_threshold for x in self.sensor_vals]):
+            print("Kidnap")
 
-async def run():
-    while True:
-        await is_kidnap()
+    async def run(self):
+        while True:
+            print(self.sensor_vals)
+            # print(self.node.var)
+            # self.sensor_vals = list(self.node['prox.ground.reflected'])
+            await self.is_kidnap()
 
-aw(run())
-aw(node.unlock())
+kidnap = KidNap()
+aw(kidnap.run())
+# aw(node.unlock())
