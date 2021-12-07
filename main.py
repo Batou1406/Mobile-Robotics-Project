@@ -27,6 +27,11 @@ def mapInitialisation():
     if counter >= 10:
         print("Failed map initialization")
 
+    print("Astar running")
+    route=ShorthestPath.astar(globalMap.getObstacles(),globalMap.getMapSize()[0], globalMap.getMapSize()[1],
+                              globalMap.getRobot(), globalMap.getGoal())
+    globalMap.setPath(route)
+
 
 def displayRoute(route):
     print("Display route")
@@ -72,12 +77,7 @@ time.sleep(5) #to get the of the camera done
 
 mapInitialisation()
 kalmanFilter.setState(globalMap.getRobot())
-
-print("Astar running")
-route=ShorthestPath.astar(globalMap.getObstacles(),globalMap.getMapSize()[0], globalMap.getMapSize()[1],
-                          globalMap.getRobot(), globalMap.getGoal())
-globalMap.setPath(route)
-x_coords, y_coords=displayRoute(route)
+x_coords, y_coords=displayRoute(globalMap.getPath())
 
 cv2.startWindowThread()
 cv2.imshow('Robot', vision.imageDraw)
@@ -111,6 +111,7 @@ while(not goal):
         aw(robot.stop())
         time.sleep(10)
         mapInitialisation()
+        x_coords, y_coords=displayRoute(globalMap.getPath())
 
     # Displaying
     image = vision.imageDraw

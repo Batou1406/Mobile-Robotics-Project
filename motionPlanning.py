@@ -1,6 +1,6 @@
 import numpy as np
 
-def getMotionAngle2(path, robot):
+def getMotionAngle(path, robot):
     previous=abs(path[0][0]-robot[0]) + abs(path[0][1]-robot[1])
     index=0
     for i in range(10,len(path)):
@@ -9,13 +9,46 @@ def getMotionAngle2(path, robot):
             index=i
     direction=[path[index-10][0]-path[index][0],path[index-10][1]-path[index][1]]
     angleToGoal=np.arctan2(direction[1], direction[0])%(2*np.pi)
+
     if((180*(angleToGoal-robot[2]))/np.pi < 180):
         return (180*(angleToGoal-robot[2]))/np.pi
     else:
         return ((180*(angleToGoal-robot[2]))/np.pi-360)
 
 
-def getMotionAngle(path, robot):
+def getMotionAngle3(path, robot):
+    # PID gains (to tune)
+    Kp = 1
+
+    previous=abs(path[0][0]-robot[0]) + abs(path[0][1]-robot[1])
+    index=0
+    for i in range(10,len(path)):
+         if abs(path[i][0]-robot[0]) + abs(path[i][1]-robot[1]) <= previous:
+            previous=abs(path[i][0]-robot[0]) + abs(path[i][1]-robot[1])
+            index=i
+    direction=[path[index-10][0]-path[index][0],path[index-10][1]-path[index][1]]
+    angleToGoal=np.arctan2(direction[1], direction[0])%(2*np.pi)
+
+    distanceRobotPath = ((path[index][0]-robot[0])**2 + (path[index][1]-robot[1])**2)**(1/2)
+    angle_correction=Kp*distanceRobotPath
+
+    if(angle_correction > 10):
+        angle_correction=10
+        # choose correction direction
+    if ((180*angleToGoal/np.pi)>180):
+        angle_correction = -angle_correction
+
+
+
+    return angle_correction
+
+    if((180*(angleToGoal-robot[2]))/np.pi < 180):
+        return (180*(angleToGoal-robot[2]))/np.pi
+    else:
+        return ((180*(angleToGoal-robot[2]))/np.pi-360)
+
+
+def getMotionAngle2(path, robot):
     # find closest point
     min_dist = abs(path[0][0]-robot[0]) + abs(path[0][1]-robot[1])
     index=0
