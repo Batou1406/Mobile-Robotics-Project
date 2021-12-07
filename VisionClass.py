@@ -11,14 +11,14 @@ class VisionClass(object):
         self.image=None
         self.imageDraw=None
         self.VideoCap=None
-        self.lowGoal=np.array([47, 24, 122])
-        self.highGoal=np.array([107, 84, 182])
-        self.lowRobot=np.array([72, 85, 85])
-        self.highRobot=np.array([92,255,255])
+        self.lowGoal=np.array([37, 14, 90])
+        self.highGoal=np.array([97, 74, 150])
+        self.lowRobot=np.array([75, 60, 60])
+        self.highRobot=np.array([95,255,255])
         self.HSVG=False
         self.HSVR=True
         self.handCalibration=handCalibration
-        self.tresh=60
+        self.tresh=50
 
     def initialize(self):
         if(self.handCalibration):
@@ -128,7 +128,7 @@ class VisionClass(object):
         points=[]
         elements=cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
         elements=sorted(elements, key=lambda x:cv2.contourArea(x), reverse=True)
-        surface = 15
+        surface = 30
         for element in elements:
             if cv2.contourArea(element)>surface:
                 ((x, y), rayon)=cv2.minEnclosingCircle(element)

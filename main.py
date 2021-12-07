@@ -10,95 +10,108 @@ import cv2
 import time
 from tdmclient import ClientAsync, aw
 
+def mapInitialisation():
+    print("Map initialization")
+    flag=False
+    counter=0
+    while(not flag and counter < 10):
+        flag=True
+        vision.update()
+        flag&=vision.Size()
+        flag&=globalMap.setRobot(vision.robotDetection())
+        flag&=globalMap.setGoal(vision.goalDetection())
+        globalMap.setObstacles(vision.obstaclesDetection(True))
+        counter+=1
+        if(not flag):
+            time.sleep(1)
+    if counter >= 10:
+        print("Failed map initialization")
+
+
+def displayRoute(route):
+    print("Display route")
+    if(route is not False):
+        x_coords = []
+        y_coords = []
+
+        for i in (range(0,len(route))):
+            x = route[i][0]
+            y = route[i][1]
+            x_coords.append(x)
+            y_coords.append(y)
+
+        # plot map and path
+        fig, ax = plt.subplots(figsize=(20,20))
+        ax = plt.gca()
+        ax.invert_yaxis()
+        ax.imshow(vision.obstaclesDetection(False), cmap=plt.cm.Dark2)
+        ax.imshow(globalMap.getObstacles(), cmap=plt.cm.Dark2, alpha=0.3)
+        ax.scatter(globalMap.getRobot()[0],globalMap.getRobot()[1], marker = "*", color = "yellow", s = 200)
+        ax.scatter(globalMap.getGoal()[0],globalMap.getGoal()[1], marker = "*", color = "red", s = 200)
+        ax.plot(x_coords,y_coords, color = "black")
+        plt.show()
+        return x_coords, y_coords
+
 print("Variables declaration")
 globalMap=GlobalMapClass()
 kalmanFilter=KalmanFilterClass()
-vision=VisionClass(handCalibration=True)
+vision=VisionClass(handCalibration=False)
 robot=LocalNavigator()
+input=[0,0,0]
+goal = False
+
+#Display variables
+x_coords = []
+y_coords = []
+up_width = 1800
+up_height = 1200
 
 print("Vision initialize and calibration")
-flag=False
 vision.initialize()
 time.sleep(5) #to get the of the camera done
 
-print("Map initialization")
-counter=0
-while(not flag and counter < 10):
-    flag=True
-    vision.update()
-    flag&=vision.Size()
-    flag&=globalMap.setRobot(vision.robotDetection())
-    flag&=globalMap.setGoal(vision.goalDetection())
-    globalMap.setObstacles(vision.obstaclesDetection(True))
-    counter+=1
-    if(not flag):
-        time.sleep(1)
-
-if counter >= 10:
-    print("Failed map initialization")
-
+mapInitialisation()
 kalmanFilter.setState(globalMap.getRobot())
 
 print("Astar running")
 route=ShorthestPath.astar(globalMap.getObstacles(),globalMap.getMapSize()[0], globalMap.getMapSize()[1],
                           globalMap.getRobot(), globalMap.getGoal())
 globalMap.setPath(route)
-
-print("Display route")
-if(route is not False):
-    x_coords = []
-    y_coords = []
-
-    for i in (range(0,len(route))):
-        x = route[i][0]
-        y = route[i][1]
-        x_coords.append(x)
-        y_coords.append(y)
-
-    # plot map and path
-    fig, ax = plt.subplots(figsize=(20,20))
-    ax = plt.gca()
-    ax.invert_yaxis()
-    ax.imshow(vision.obstaclesDetection(False), cmap=plt.cm.Dark2)
-    ax.imshow(globalMap.getObstacles(), cmap=plt.cm.Dark2, alpha=0.3)
-    ax.scatter(globalMap.getRobot()[0],globalMap.getRobot()[1], marker = "*", color = "yellow", s = 200)
-    ax.scatter(globalMap.getGoal()[0],globalMap.getGoal()[1], marker = "*", color = "red", s = 200)
-    ax.plot(x_coords,y_coords, color = "black")
-    plt.show()
-
-
-print("Start navigation")
+x_coords, y_coords=displayRoute(route)
 
 cv2.startWindowThread()
 cv2.imshow('Robot', vision.imageDraw)
-cv2.resizeWindow('Robot', 2000, 1200)
-
-up_width = 2000
-up_height = 1200
+cv2.resizeWindow('Robot', up_width, up_height)
 up_points = (up_width, up_height)
 resized_up = cv2.resize(vision.imageDraw, up_points, interpolation= cv2.INTER_LINEAR)
 cv2.imshow('Robot', vision.imageDraw)
-cv2.resizeWindow('Robot', 1800, 1200)
+cv2.resizeWindow('Robot', up_width, up_height)
 
-input=[0,0,0]
-notGoal = True
-while(notGoal):
+print("Start navigation")
+while(not goal):
+    # get robot position with kalmanFilter
     robotPos=kalmanFilter.predict(input,0.1)
     vision.update()
     meas = vision.robotDetection()
     if meas is not False:
         robotPos=kalmanFilter.update(meas)
-
     globalMap.setRobot(robotPos)
 
+    #Check if it has reached the goal
     if  abs(globalMap.getGoal()[0]-globalMap.getRobot()[0])+abs(globalMap.getGoal()[1]-globalMap.getRobot()[1]) < 30:
-        robot.run(0, True)
-        notGoal = False
+        goal = True
 
-    motorSpeed, omega = aw(robot.run(motionPlanning.getMotionAngle(globalMap.getPath(),globalMap.getRobot()), False))
+    # Make the robot move
+    motorSpeed, omega, kidnap = aw(robot.run(motionPlanning.getMotionAngle(globalMap.getPath(),globalMap.getRobot())))
+    input=[motorSpeed*np.cos(globalMap.getRobot()[2])/4,motorSpeed*np.sin(globalMap.getRobot()[2])/4, -6*(omega*np.pi/180)]
 
-    input=[motorSpeed*np.cos(globalMap.getRobot()[2])/3,motorSpeed*np.sin(globalMap.getRobot()[2])/3, -6*(omega*np.pi/180)]
+    # Check if the robot was kidnapped
+    if(kidnap):
+        aw(robot.stop())
+        time.sleep(10)
+        mapInitialisation()
 
+    # Displaying
     image = vision.imageDraw
     cv2.circle(image, (int(globalMap.getGoal()[0]), int(globalMap.getGoal()[1])), 15, (0, 0, 255), 1)
     cv2.circle(image, (int(globalMap.getRobot()[0]), int(globalMap.getRobot()[1])), 15, (255, 0, 0), 1)
@@ -111,9 +124,10 @@ while(notGoal):
     cv2.imshow('Robot', resized_up)
     cv2.waitKey(1)
 
-
     time.sleep(0.1)
 
+# Goal is reached, end
+aw(robot.stop())
 print("Goal reached")
 time.sleep(15)
 vision.finish()
