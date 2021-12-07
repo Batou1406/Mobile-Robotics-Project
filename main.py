@@ -107,6 +107,7 @@ while(not goal):
 
     # Check if the robot was kidnapped
     if(kidnap):
+        print("Kidnap")
         aw(robot.stop())
         time.sleep(10)
         mapInitialisation()

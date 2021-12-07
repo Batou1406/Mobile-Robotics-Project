@@ -152,7 +152,7 @@ class LocalNavigator:
         self.print_sensor_values()
 
         # check whether Thymio is kidnapping
-        self.is_kidnap()
+        aw(self.is_kidnap())
 
         # compute the proper motor speed according to the distance of obstacle
         self.compute_motor_speed()
