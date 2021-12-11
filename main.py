@@ -24,6 +24,7 @@ def mapInitialisation():
         counter+=1
         if(not flag):
             time.sleep(1)
+            print("failed attempt :",counter)
     if counter >= 10:
         print("Failed map initialization")
 
