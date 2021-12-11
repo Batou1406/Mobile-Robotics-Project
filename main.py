@@ -10,6 +10,7 @@ import cv2
 import time
 from tdmclient import ClientAsync, aw
 
+
 def mapInitialisation():
     print("Map initialization")
     flag=False
@@ -34,6 +35,7 @@ def mapInitialisation():
     globalMap.setPath(route)
 
 
+#for printing purpose only
 def displayRoute(route,display=True):
     print("Display route")
     x_coords = []
@@ -76,10 +78,12 @@ print("Vision initialize and calibration")
 vision.initialize()
 time.sleep(5) #to get the of the camera done
 
+# create a new map, run the path planning and initialize kalman filter with the robot position
 mapInitialisation()
 kalmanFilter.setState(globalMap.getRobot())
 x_coords, y_coords=displayRoute(globalMap.getPath())
 
+#  Create and setup a window, display purpose only
 cv2.startWindowThread()
 cv2.imshow('Robot', vision.imageDraw)
 cv2.resizeWindow('Robot', up_width, up_height)
@@ -88,6 +92,7 @@ resized_up = cv2.resize(vision.imageDraw, up_points, interpolation= cv2.INTER_LI
 cv2.imshow('Robot', vision.imageDraw)
 cv2.resizeWindow('Robot', up_width, up_height)
 
+# navigation algorithm start
 print("Start navigation")
 while(not goal):
     # get robot position with kalmanFilter
