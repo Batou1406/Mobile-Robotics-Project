@@ -74,6 +74,9 @@ def calibration():
     treshhold=70
     HSV=False
     red, green, blue=100,100,100
+    G1, G2, G3=150, 70, 90
+    R1, R2, R3=90, 50, 50
+    HSVR,HSVG=Treu, False
 
     while(True):
         ret, frame=VideoCap.read()
