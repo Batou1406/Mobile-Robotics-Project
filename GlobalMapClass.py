@@ -20,12 +20,18 @@ class GlobalMapClass(object):
         self.mapSize=[0,0]
 
     def setRobot(self, robotPos):
-        #robotPos as [x,y,alpha]
-        self.robot=robotPos
+        if(robotPos is not False):
+            #robotPos as [x,y,aplha] coordinate
+            self.robot=robotPos
+            return True
+        return False
 
     def setGoal(self, goalPos):
-        #goalPos as [x,y] coordinate
-        self.goal=goalPos
+        if(goalPos is not False):
+            #goalPos as [x,y] coordinate
+            self.goal=goalPos
+            return True
+        return False
 
     def setPath(self, pathList):
         #pathList contains a list of (x,y) coordinates
@@ -34,12 +40,11 @@ class GlobalMapClass(object):
     def setObstacles(self, obstacles):
         #pathObstacles contains a list of (x,y) coordinates
         self.obstaclesGrid=obstacles
+        self.mapSize[0]=np.size(obstacles,1)
+        self.mapSize[1]=np.size(obstacles,0)
 
-    def setMapSize(self, height, width):
-        self.mapSize=[height,width]
-
-    def getPath(self, i):
-        return self.path[i]
+    def getPath(self):
+        return self.path
 
     def getObstacles(self):
         return self.obstaclesGrid
