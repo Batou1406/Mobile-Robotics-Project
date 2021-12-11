@@ -2,12 +2,13 @@ import numpy as np
 
 class KalmanFilterClass(object):
     def __init__(self):
-        # State vector : (x, y, alpha)
+
+        # State vector : the robot position and orientation (x, y, alpha)
         self.x=np.array([[0],
                           [0],
                           [0]])
 
-        # input vector : (x_dot, y_dot, omega)
+        # input vector : the velocity of the robot (x_dot, y_dot, omega)
         self.u=np.array([[0],
                           [0],
                           [0]])
@@ -22,7 +23,7 @@ class KalmanFilterClass(object):
                           [0, 1, 0],
                           [0, 0, 1]])
 
-        # Observation matrix
+        # Observation matrix, robot position and orientation can be observed
         self.H=np.array([[1, 0, 0],
                           [0, 1, 0],
                           [0, 0, 1]])
@@ -38,6 +39,7 @@ class KalmanFilterClass(object):
         self.P=np.eye(self.A.shape[1])
 
     def setState(self, point):
+        
         self.x=np.array([[point[0]],
                           [point[1]],
                           [point[2]]])

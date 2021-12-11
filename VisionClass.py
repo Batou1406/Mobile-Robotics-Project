@@ -146,7 +146,7 @@ class VisionClass(object):
 
         for i in range(width):
             for j in range(height):
-                result = np.sum(map_occupancy[i,j])
+                result = map_occupancy[i,j]
                 if result > 0 :
                     occupancy_grid[i,j] = 1
 
