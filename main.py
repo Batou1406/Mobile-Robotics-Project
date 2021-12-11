@@ -18,7 +18,6 @@ def mapInitialisation():
     while(not flag and counter < 10):
         flag=True
         vision.update()
-        flag&=vision.Size()
         flag&=globalMap.setRobot(vision.robotDetection())
         flag&=globalMap.setGoal(vision.goalDetection())
         globalMap.setObstacles(vision.obstaclesDetection(True))

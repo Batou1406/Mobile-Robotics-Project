@@ -84,8 +84,6 @@ def calibration():
 
         key=cv2.waitKey(1)&0xFF
         if key==ord('q'):
-            ret, frame=VideoCap.read()
-            status = cv2.imwrite('C:/Users/bapti/Documents/2. EPFL/MA1/Basics of Moible Robotics/MobileRoboticsGit/finalMap.png',frame)
             VideoCap.release()
             cv2.destroyAllWindows()
             break
