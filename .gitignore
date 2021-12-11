@@ -1,0 +1,5 @@
+# Mac DS file
+.DS_Store
+
+# Byte-compiled
+__pycache__/
