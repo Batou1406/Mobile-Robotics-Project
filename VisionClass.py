@@ -4,10 +4,6 @@ import calibrate
 
 class VisionClass(object):
     def __init__(self, handCalibration):
-        self.ratioX=0
-        self.ratioY=0
-        self.cornerX=0
-        self.cornerY=0
         self.image=None
         self.imageDraw=None
         self.VideoCap=None
@@ -19,6 +15,7 @@ class VisionClass(object):
         self.HSVR=True
         self.handCalibration=handCalibration
         self.tresh=50
+
 
     def initialize(self):
         if(self.handCalibration):
@@ -44,53 +41,20 @@ class VisionClass(object):
         self.image=frame
 
 
-    def Size(self):
-        #filter
-        gray=cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
-        self.map=gray
-        blur=cv2.GaussianBlur(gray, (3, 3), 0.5)
-        self.mask=blur
-        edge=cv2.Canny(blur, 0, 50, 3)
-        self.erode=edge
-
-        #find Countours
-        contours, hierarchy=cv2.findContours(edge, cv2.RETR_EXTERNAL,
-                                               cv2.CHAIN_APPROX_SIMPLE)
-        #if no contours are found
-        if(len(contours) < 1):
-            return False
-
-        #take largest rectangle
-        x,y,w,h = 0,0,0,0
-        for cnt in contours:
-            x_new,y_new,w_new,h_new=cv2.boundingRect(cnt)
-            if(w_new*h_new>w*h):
-                x,y,w,h=x_new,y_new,w_new,h_new
-
-        #dray rectangle for display purpose
-        self.imageDraw=self.image.copy()
-        cv2.rectangle(self.imageDraw, (x,y), pt2=(x+w,y+h), color=(255,0,0), thickness=10)
-
-        #set up variables for grid conversion
-        self.cornerX=x
-        self.cornerY=y
-        self.ratioX=w
-        self.ratioY=h
-        return True
-
-
     def finish(self):
         self.VideoCap.release()
         cv2.destroyAllWindows()
+
 
     def update(self):
         ret, frame=self.VideoCap.read()
         self.image=frame
         self.imageDraw=frame
-        cv2.rectangle(self.imageDraw, (self.cornerX,self.cornerY), pt2=(self.cornerX+self.ratioX,self.cornerY+self.ratioY), color=(255,0,0), thickness=1)
+
 
     def display(self):
         cv2.imshow('Image Draw', self.imageDraw)
+
 
     def goalDetection(self):
         filter=cv2.blur(self.image, (3, 3))
