@@ -56,30 +56,6 @@ class VisionClass(object):
         cv2.imshow('Image Draw', self.imageDraw)
 
 
-    def goalDetection(self):
-        filter=cv2.blur(self.image, (3, 3))
-        if(self.HSVG):
-            # Convert image to HSV
-            map_hsv=cv2.cvtColor(filter, cv2.COLOR_BGR2HSV)
-            mask=cv2.inRange(map_hsv, self.lowGoal, self.highGoal)
-        else:
-            mask=cv2.inRange(filter, self.lowGoal, self.highGoal)
-
-        points=[]
-        elements=cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
-        elements=sorted(elements, key=lambda x:cv2.contourArea(x), reverse=True)
-        surface = 15
-        for element in elements:
-            if cv2.contourArea(element)>surface:
-                ((x, y), rayon)=cv2.minEnclosingCircle(element)
-                points.append(np.array([int(x), int(y)]))
-        if (len(points)>0):
-            cv2.circle(self.imageDraw, (points[0][0], points[0][1]), 10, (0, 0, 255), 2)
-            return [points[0][0], points[0][1]]
-        else:
-            return False
-
-
     def robotDetection(self):
         filter=cv2.blur(self.image, (3, 3))
         if(self.HSVR):
@@ -105,6 +81,30 @@ class VisionClass(object):
             cv2.arrowedLine(self.imageDraw,(points[0][0], points[0][1]),(int(points[0][0]+30*np.cos(theta)),
                             int(points[0][1]+30*np.sin(theta))),color=(0, 255, 0),thickness=1, tipLength=0.2)
             return [points[0][0], points[0][1], theta]
+        else:
+            return False
+
+
+    def goalDetection(self):
+        filter=cv2.blur(self.image, (3, 3))
+        if(self.HSVG):
+            # Convert image to HSV
+            map_hsv=cv2.cvtColor(filter, cv2.COLOR_BGR2HSV)
+            mask=cv2.inRange(map_hsv, self.lowGoal, self.highGoal)
+        else:
+            mask=cv2.inRange(filter, self.lowGoal, self.highGoal)
+
+        points=[]
+        elements=cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
+        elements=sorted(elements, key=lambda x:cv2.contourArea(x), reverse=True)
+        surface = 15
+        for element in elements:
+            if cv2.contourArea(element)>surface:
+                ((x, y), rayon)=cv2.minEnclosingCircle(element)
+                points.append(np.array([int(x), int(y)]))
+        if (len(points)>0):
+            cv2.circle(self.imageDraw, (points[0][0], points[0][1]), 10, (0, 0, 255), 2)
+            return [points[0][0], points[0][1]]
         else:
             return False
 
