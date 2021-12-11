@@ -10,7 +10,7 @@ class LocalNavigator:
         aw(self.node.wait_for_variables()) # wait for variables
 
         self.dist_threshold = 2300 # distance threshold to detect obstacles
-        self.motor_speed = 200 # default motor speed (default 200)
+        self.motor_speed = 0 # default motor speed
         self.sensor_vals = list(self.node['prox.horizontal']) # sensor values of proxy horizontal
         self.verbose = False # whether to print status message or not
         self.omega = 0 # rotation velocity
@@ -26,11 +26,11 @@ class LocalNavigator:
         """
         self.is_alter = [] # for checking whether Thymio stuck in deadlock
         self.deadlock_flag = False # whether Thymio stuck in deadlock
-        self.turn_direction = 0
+        self.turn_direction = 0 # turning direction (left: -1, right: 1, others: 0)
         self.reflected_sensor_vals = list(self.node['prox.ground.reflected']) # sensor values of proxy ground reflected {0...1023}
         self.height_threshold = 70 # threshold recognizing kidnap
         self.kidnap = False # flag of kidnapping
-        self.resolved_obstacle = 0 # flag to resolve obstacle avoidance
+        self.resolved_obstacle = 0 # the number of resolution of obstacle avoidance
 
     def update_proxsensor(self):
         """
@@ -88,7 +88,7 @@ class LocalNavigator:
         await self.client.wait_for_node()
         self.reflected_sensor_vals = list(self.node['prox.ground.reflected']) # update sensor values
         if all([x < self.height_threshold for x in self.reflected_sensor_vals]):
-            print("Kidnap")
+            print(">> Kidnap")
             self.kidnap = True
         else:
             self.kidnap = False
@@ -98,7 +98,7 @@ class LocalNavigator:
         Check whether Thymio stuck in deadlock situation or not.
         """
         if len(self.is_alter) > 20 and sum(self.is_alter) == 0: # turn right and turn left alternately over 20 times
-            print(">>Deadlock")
+            print(">> Deadlock")
             self.deadlock_flag = True
 
     async def turn_left(self):
@@ -106,8 +106,8 @@ class LocalNavigator:
         Make Thymio turn left.
         """
         self.turn_direction = -1
-        self.omega=self.motor_speed
-        self.motor_speed=0
+        self.omega = self.motor_speed # angle velocity
+        self.motor_speed = 0
         await self.node.set_variables(self.motor(-self.omega, self.omega))
         self.is_alter.append(self.turn_direction)
 
@@ -116,8 +116,8 @@ class LocalNavigator:
         Make Thymio turn right.
         """
         self.turn_direction = 1
-        self.omega=-self.motor_speed
-        self.motor_speed=0
+        self.omega = -self.motor_speed # angle velocity
+        self.motor_speed = 0
         await self.node.set_variables(self.motor(-self.omega, self.omega))
         self.is_alter.append(self.turn_direction)
 
@@ -181,17 +181,17 @@ class LocalNavigator:
         self.compute_motor_speed()
 
         if all([x < self.dist_threshold for x in front_prox_horizontal]): # no obstacle
-            if self.resolved_obstacle :
+            if self.resolved_obstacle: # resolved_obstacle > 0
                 self.motor_speed = 180
-                if self.resolved_obstacle == 1:
+                if self.resolved_obstacle == 1: # for more space
                     if self.turn_direction == 1:
                         await self.turn_right()
                     elif self.turn_direction == -1:
                         await self.turn_left()
-                self.resolved_obstacle += 1
+                self.resolved_obstacle += 1 # count up
                 await self.forward()
                 if self.resolved_obstacle > 7:
-                    self.resolved_obstacle = 0
+                    self.resolved_obstacle = 0 # reset
                 return
             await self.follow_global_path(angle)
             self.deadlock_flag = False # free to deadlock
@@ -242,7 +242,7 @@ class LocalNavigator:
         param    angle: a given angle to the goal
         Run avoid function making Thymio run.
         """
-        self.motor_speed=0
-        self.omega=0
+        self.motor_speed = 0
+        self.omega = 0
         await self.avoid(angle)
         return self.motor_speed, self.omega, self.kidnap
