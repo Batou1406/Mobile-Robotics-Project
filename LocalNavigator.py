@@ -104,15 +104,18 @@ class LocalNavigator:
         """
         Make Thymio turn left.
         """
-        self.omega = -self.omega
-        await self.node.set_variables(self.motor(-self.motor_speed, self.motor_speed))
+        self.omega=self.motor_speed
+        self.motor_speed=0
+        await self.node.set_variables(self.motor(-self.omega, self.omega))
         self.is_alter.append(self.turn_direction)
 
     async def turn_right(self):
         """
         Make Thymio turn right.
         """
-        await self.node.set_variables(self.motor(self.motor_speed, -self.motor_speed))
+        self.omega=-self.motor_speed
+        self.motor_speed=0
+        await self.node.set_variables(self.motor(-self.omega, self.omega))
         self.is_alter.append(self.turn_direction)
 
     async def forward(self, omega=0):
