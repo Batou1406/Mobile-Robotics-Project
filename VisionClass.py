@@ -145,7 +145,7 @@ class VisionClass(object):
             return False
 
 
-    def preprocessing(self,expend):
+    def createOccupancyGrid(self,expend):
         # Convert to RGB
         map_rgb = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
 
@@ -173,7 +173,7 @@ class VisionClass(object):
 
 
     def obstaclesDetection(self, expend):
-        map_occupancy=self.preprocessing(expend)
+        map_occupancy=self.createOccupancyGrid(expend)
 
         width=np.size(map_occupancy,0)
         height=np.size(map_occupancy,1)

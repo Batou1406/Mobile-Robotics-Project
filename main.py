@@ -109,7 +109,7 @@ while(not goal):
 
     # Make the robot move
     motorSpeed, omega, kidnap = aw(robot.run(motionPlanning.getMotionAngle(globalMap.getPath(),globalMap.getRobot())))
-    motorInput=[motorSpeed*np.cos(globalMap.getRobot()[2])/3.2,motorSpeed*np.sin(globalMap.getRobot()[2])/3.2, -0.9*(omega*np.pi/180)]
+    motorInput=[motorSpeed*np.cos(globalMap.getRobot()[2])/3.2,motorSpeed*np.sin(globalMap.getRobot()[2])/3.2, -1.1*(omega*np.pi/180)]
 
     # Check if the robot was kidnapped
     if(kidnap):
