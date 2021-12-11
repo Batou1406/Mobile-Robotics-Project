@@ -26,10 +26,11 @@ class LocalNavigator:
         """
         self.is_alter = [] # for checking whether Thymio stuck in deadlock
         self.deadlock_flag = False # whether Thymio stuck in deadlock
+        self.turn_direction = 0
         self.reflected_sensor_vals = list(self.node['prox.ground.reflected']) # sensor values of proxy ground reflected {0...1023}
         self.height_threshold = 70 # threshold recognizing kidnap
         self.kidnap = False # flag of kidnapping
-        self.resolved_obstacle = False # flag to resolve obstacle avoidance
+        self.resolved_obstacle = 0 # flag to resolve obstacle avoidance
 
     def update_proxsensor(self):
         """
@@ -104,6 +105,7 @@ class LocalNavigator:
         """
         Make Thymio turn left.
         """
+        self.turn_direction = -1
         self.omega=self.motor_speed
         self.motor_speed=0
         await self.node.set_variables(self.motor(-self.omega, self.omega))
@@ -113,6 +115,7 @@ class LocalNavigator:
         """
         Make Thymio turn right.
         """
+        self.turn_direction = 1
         self.omega=-self.motor_speed
         self.motor_speed=0
         await self.node.set_variables(self.motor(-self.omega, self.omega))
@@ -180,20 +183,27 @@ class LocalNavigator:
         self.compute_motor_speed()
 
         if all([x < self.dist_threshold for x in front_prox_horizontal]): # no obstacle
-            if self.resolved_obstacle:
+            if self.resolved_obstacle :
                 self.motor_speed = 180
+                if self.resolved_obstacle == 1:
+                    if self.turn_direction == 1:
+                        await self.turn_right()
+                    elif self.turn_direction == -1:
+                        await self.turn_left()
+                self.resolved_obstacle += 1
                 await self.forward()
-                await self.client.sleep(1)
+                if self.resolved_obstacle > 7:
+                    self.resolved_obstacle = 0
+                return
             await self.follow_global_path(angle)
             self.deadlock_flag = False # free to deadlock
-            self.resolved_obstacle = False # free to resolution
             self.is_alter = [] # reset
 
         if not self.deadlock_flag: # not in deadlock situation
             if front_prox_horizontal[2] > self.dist_threshold: # front obstacle
                 if not self.resolved_obstacle:
                     print("Front obstacle")
-                self.resolved_obstacle = True
+                self.resolved_obstacle = 1
                 if front_prox_horizontal[2] > 4000: # too close to the obstacle
                     await self.backward()
 
@@ -211,13 +221,13 @@ class LocalNavigator:
             elif any([x > self.dist_threshold for x in front_prox_horizontal[:2]]): # left obstacle
                 if not self.resolved_obstacle:
                     print("Left obstacle")
-                self.resolved_obstacle = True
+                self.resolved_obstacle = 1
                 await self.turn_right()
 
             elif any([x > self.dist_threshold for x in front_prox_horizontal[3:]]): # right obstacle
                 if not self.resolved_obstacle:
                     print("Right obstacle")
-                self.resolved_obstacle = True
+                self.resolved_obstacle = 1
                 await self.turn_left()
 
             elif any([x > self.dist_threshold for x in back_prox_horizontal]): # back obstacle
@@ -234,5 +244,7 @@ class LocalNavigator:
         param    angle: a given angle to the goal
         Run avoid function making Thymio run.
         """
+        self.motor_speed=0
+        self.omega=0
         await self.avoid(angle)
         return self.motor_speed, self.omega, self.kidnap

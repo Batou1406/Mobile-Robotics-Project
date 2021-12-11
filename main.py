@@ -57,7 +57,7 @@ def displayRoute(route,display=True):
         ax.scatter(globalMap.getGoal()[0],globalMap.getGoal()[1], marker = "*", color = "red", s = 200)
         ax.plot(x_coords,y_coords, color = "black")
         plt.show()
-        return x_coords, y_coords
+    return x_coords, y_coords
 
 print("Variables declaration")
 globalMap=GlobalMapClass()
