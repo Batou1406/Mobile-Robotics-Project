@@ -2,6 +2,9 @@ import cv2
 import numpy as np
 
 def souris(event, x, y, flags, param):
+    """
+    mouse event
+    """
     global red, green, blue, low, high, H, S, V,tresh, HSV
     if event==cv2.EVENT_LBUTTONDBLCLK:
         blue=frame[y, x][0]
@@ -25,6 +28,33 @@ def souris(event, x, y, flags, param):
 
 
 def calibration():
+    """
+    Open a window where the user can choose, with mouse and keyboard
+    the value of the filter used for robot, goal and obstacles Detection
+    There is the choice of two type of filter for goal and robot detection :
+    color detection based on a RGB filter
+    color detection based on a HSV filter
+    The user can also set the treshhold value for the treshhold filter of
+    obstacle detection.
+
+    With a mouse click, the user set the filter to RGB and the value used
+    are the one the mouse was pointing at on the display when clicking.
+    With a mouse scroll, the user set the filter to HSV and modifiy the H
+    value. S and V value can be modified with keyboard key O/L
+    and P/M respectively.
+    With a double click on the display, then with T/F key, the user modify
+    the treshold value.
+
+    The display "Mask" shows the results of the choosen filter (HSV, RGB or
+    treshhold), so the user can easily adapt the parameters until he is
+    satisfied.
+
+    When the user is satisfied with the value of a filter he can set the values
+    that will be return for the goal with the key G, for the robot with the key
+    R, or at the end for the treshold for obstacle detection when he quit the
+    calibration with the key Q. If the user doesn't set one of the filter,
+    default value will be returned.
+    """
     VideoCap=cv2.VideoCapture(1+cv2.CAP_DSHOW)
     cv2.namedWindow('Camera')
     cv2.setMouseCallback('Camera', souris)

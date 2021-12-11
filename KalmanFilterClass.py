@@ -28,10 +28,12 @@ class KalmanFilterClass(object):
                           [0, 1, 0],
                           [0, 0, 1]])
 
+        # state dynamics noise covariance matrix
         self.Q=np.array([[10, 0, 0],
                           [0, 10, 0],
                           [0, 0, 10]])
 
+        # measurement noise covariance matrix
         self.R=np.array([[10, 0, 0],
                           [0, 10, 0],
                           [0, 0, 10]])
@@ -39,13 +41,23 @@ class KalmanFilterClass(object):
         self.P=np.eye(self.A.shape[1])
 
     def setState(self, point):
-        
+        """
+        initialize the kalman filter with the first measured robot position
+        and orientation
+        """
         self.x=np.array([[point[0]],
                           [point[1]],
                           [point[2]]])
 
 
     def predict(self, input, timeStep):
+        """
+        Predict the next state
+        use the previous state and the input (thymio odometry) to predict the
+        next state
+        update the uncertainty matrix
+        return the predicted state (robot position and orientation)
+        """
         self.u = np.array([[input[0]],[input[1]],[input[2]]])
         self.x=np.dot(self.A, self.x) + np.dot((timeStep*self.B), self.u)
         # Calcul de la covariance de l'erreur
@@ -54,13 +66,19 @@ class KalmanFilterClass(object):
 
 
     def update(self, meas):
+        """
+        Use the measurement to calculate the kalman gain and make a correction
+        to the predicted state
+        update the uncertainty matrix
+        return the updated state (robot position and orientation)
+        """
         z = np.array([[meas[0]],[meas[1]],[meas[2]]])
-        # Calcul du gain de Kalman
+
+        #  Kalman gain computation
         S=np.dot(self.H, np.dot(self.P, self.H.T))+self.R
         K=np.dot(np.dot(self.P, self.H.T), np.linalg.inv(S))
 
         # Correction / innovation
-        #self.x=np.round(self.x+np.dot(K, (z-np.dot(self.H, self.x))))
         self.x=self.x+np.dot(K, (z-np.dot(self.H, self.x)))
         I=np.eye(self.H.shape[1])
         self.P=(I-(K*self.H))*self.P
