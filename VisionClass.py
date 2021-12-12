@@ -18,13 +18,13 @@ class VisionClass(object):
 
 
     def initialize(self):
-    """
-    This function defines the bounds for the filters that will be used to detect 
-    the colour of the robot and the goal in the case of a manual calibration which
-    determined the values of the image directly (then we just need to do a range of
-    values)
+        """
+        This function defines the bounds for the filters that will be used to detect 
+        the colour of the robot and the goal in the case of a manual calibration which
+        determined the values of the image directly (then we just need to do a range of
+        values)
 
-    """
+        """
         if(self.handCalibration):
             G1, G2, G3, HSVG, R1, R2, R3, HSVR, tresh=calibrate.calibration()
             self.tresh=tresh
@@ -64,12 +64,12 @@ class VisionClass(object):
 
 
     def robotDetection(self):
-    """
-    this function detects the robot by detecting the green color in an HSV colorspace 
-    then it detects all the contours of the image (after the green mask applied)
-    takes the contours with the areas big enough to correspond to the robot (should find 2 
-    coutours because there are 2 circles)
-    """
+        """
+        this function detects the robot by detecting the green color in an HSV colorspace 
+        then it detects all the contours of the image (after the green mask applied)
+        takes the contours with the areas big enough to correspond to the robot (should find 2 
+        coutours because there are 2 circles)
+        """
 
         #apply blur filter(reduce noise)
         filter=cv2.blur(self.image, (3, 3))
@@ -104,12 +104,12 @@ class VisionClass(object):
 
 
     def goalDetection(self):
-    """
-    this function detects the goal by detecting the red color in an HSV colorpace
-    then it detects all the contours of the image (after the red mask applied)
-    takes the coutours whose areas are big enough to be the robot 
-    (should find 1 coutour corresponding to the red circle)
-    """
+        """
+        this function detects the goal by detecting the red color in an HSV colorpace
+        then it detects all the contours of the image (after the red mask applied)
+        takes the coutours whose areas are big enough to be the robot 
+        (should find 1 coutour corresponding to the red circle)
+        """
 
         #apply blur filter (reduce noise)
         filter=cv2.blur(self.image, (3, 3))
@@ -137,12 +137,12 @@ class VisionClass(object):
 
 
     def createOccupancyGrid(self,expend):
-    """
-    This function applies filters on the image to have a good image to analyse
-    It returns a binary map that we can give to the function that compute the path
-    of the robot
-    It also enlarges the obstacles
-    """
+        """
+        This function applies filters on the image to have a good image to analyse
+        It returns a binary map that we can give to the function that compute the path
+        of the robot
+        It also enlarges the obstacles
+        """
         # Convert to RGB
         map_rgb = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
 
@@ -171,11 +171,11 @@ class VisionClass(object):
 
 
     def obstaclesDetection(self, expend):
-    """
-    create the occupancy grid :
-    1 = occupied
-    0 = free
-    """
+        """
+        create the occupancy grid :
+        1 = occupied
+        0 = free
+        """
         map_occupancy=self.createOccupancyGrid(expend)
 
         width=np.size(map_occupancy,0)
