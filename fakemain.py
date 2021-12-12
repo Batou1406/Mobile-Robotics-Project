@@ -102,8 +102,7 @@ print("Start navigation")
 while(not goal):
     # get robot position with kalmanFilter
     robotPos=kalmanFilter.predict(motorInput,0.1)
-    vision.imageDraw=vision.image
-    meas = robotPos + [random.gauss(0, 5),random.gauss(0, 5),random.gauss(0, 0.3)]
+    meas = [robotPos[0] + random.gauss(0, 1), robotPos[1] + random.gauss(0, 1), robotPos[2] + random.gauss(0, 0.05)]
     if meas is not False:
         robotPos=kalmanFilter.update(meas)
     globalMap.setRobot(robotPos)
@@ -127,14 +126,18 @@ while(not goal):
         x_coords, y_coords=displayRoute(globalMap.getPath(),False)
 
     # Displaying
-    image = vision.imageDraw
+    image = vision.image.copy()
     cv2.circle(image, (int(globalMap.getGoal()[0]), int(globalMap.getGoal()[1])), 15, (0, 0, 255), 1)
     cv2.circle(image, (int(globalMap.getRobot()[0]), int(globalMap.getRobot()[1])), 15, (255, 0, 0), 1)
     cv2.arrowedLine(image,(int(globalMap.getRobot()[0]), int(globalMap.getRobot()[1])),(int(globalMap.getRobot()[0]+30*np.cos(globalMap.getRobot()[2])),
                     int(globalMap.getRobot()[1]+30*np.sin(globalMap.getRobot()[2]))),color=(255, 0, 0),thickness=1, tipLength=0.2)
+
+    cv2.circle(image, (int(meas[0]), int(meas[1])), 15, (0, 255, 0), 1)
+    cv2.arrowedLine(image,(int(meas[0]), int(meas[1])),(int(meas[0]+30*np.cos(meas[2])),
+                    int(meas[1]+30*np.sin(meas[2]))),color=(0, 255, 0),thickness=1, tipLength=0.2)
     for i in range(len(x_coords)):
         cv2.circle(image, (x_coords[i], y_coords[i]), 1, (0, 0, 255), 2)
-    resized_up = cv2.resize(vision.image, up_points, interpolation= cv2.INTER_LINEAR)
+    resized_up = cv2.resize(image, up_points, interpolation= cv2.INTER_LINEAR)
     cv2.putText(resized_up, "angle{:d}, robot : x {:d}, y {:d}".format(int(motionPlanning.getMotionAngle(globalMap.getPath(),globalMap.getRobot())),int(globalMap.getRobot()[0]),int(globalMap.getRobot()[1])),(5, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1, cv2.LINE_AA)
     cv2.imshow('Robot', resized_up)
     cv2.waitKey(1)
@@ -144,4 +147,3 @@ while(not goal):
 # Goal is reached, end
 print("Goal reached")
 time.sleep(15)
-vision.finish()
