@@ -10,7 +10,7 @@ import time
 import random
 
 
-def mapInitialisation():
+def mapInitialisation(vision, globalMap):
     print("Map initialization")
     flag=False
     counter=0
@@ -35,7 +35,7 @@ def mapInitialisation():
 
 
 #for printing purpose only
-def displayRoute(route,display=True):
+def displayRoute(route, globalMap, vision, display=True):
     print("Display route")
     x_coords = []
     y_coords = []
@@ -59,91 +59,92 @@ def displayRoute(route,display=True):
         plt.show()
     return x_coords, y_coords
 
-print("Variables declaration")
-globalMap=GlobalMapClass()
-kalmanFilter=KalmanFilterClass()
-vision=VisionClass(handCalibration=False)
-motorInput=[0,0,0]
-goal = False
-# manually seting the image and filter to work with instead of calling vision.initialize and vision.update
-# that need a camera.
-vision.lowRobot = np.array([30, 50, 50])
-vision.highRobot = np.array([100, 255, 255])
-vision.HSVR = True
-vision.lowGoal = np.array([37, 14, 90])
-vision.highGoal = np.array([97, 74, 150])
-vision.HSVG = False
-vision.tresh = 40
+def fakemain():
+    print("Variables declaration")
+    globalMap=GlobalMapClass()
+    kalmanFilter=KalmanFilterClass()
+    vision=VisionClass(handCalibration=False)
+    motorInput=[0,0,0]
+    goal = False
+    # manually seting the image and filter to work with instead of calling vision.initialize and vision.update
+    # that need a camera.
+    vision.lowRobot = np.array([30, 50, 50])
+    vision.highRobot = np.array([100, 255, 255])
+    vision.HSVR = True
+    vision.lowGoal = np.array([37, 14, 90])
+    vision.highGoal = np.array([97, 74, 150])
+    vision.HSVG = False
+    vision.tresh = 40
 
-#Display variables
-x_coords = []
-y_coords = []
-up_width = 1800
-up_height = 1200
+    #Display variables
+    x_coords = []
+    y_coords = []
+    up_width = 1800
+    up_height = 1200
 
-print("Vision initialize and calibration")
+    print("Vision initialize and calibration")
 
-# create a new map, run the path planning and initialize kalman filter with the robot position
-mapInitialisation()
-kalmanFilter.setState(globalMap.getRobot())
-x_coords, y_coords=displayRoute(globalMap.getPath())
+    # create a new map, run the path planning and initialize kalman filter with the robot position
+    mapInitialisation(vision, globalMap)
+    kalmanFilter.setState(globalMap.getRobot())
+    x_coords, y_coords=displayRoute(globalMap.getPath(), globalMap, vision)
 
-#  Create and setup a window, display purpose only
-cv2.startWindowThread()
-cv2.imshow('Robot', vision.imageDraw)
-cv2.resizeWindow('Robot', up_width, up_height)
-up_points = (up_width, up_height)
-resized_up = cv2.resize(vision.imageDraw, up_points, interpolation= cv2.INTER_LINEAR)
-cv2.imshow('Robot', vision.imageDraw)
-cv2.resizeWindow('Robot', up_width, up_height)
+    #  Create and setup a window, display purpose only
+    cv2.startWindowThread()
+    cv2.imshow('Robot', vision.imageDraw)
+    cv2.resizeWindow('Robot', up_width, up_height)
+    up_points = (up_width, up_height)
+    resized_up = cv2.resize(vision.imageDraw, up_points, interpolation= cv2.INTER_LINEAR)
+    cv2.imshow('Robot', vision.imageDraw)
+    #cv2.resizeWindow('Robot', up_width, up_height)
 
-# navigation algorithm start
-print("Start navigation")
-while(not goal):
-    # get robot position with kalmanFilter
-    robotPos=kalmanFilter.predict(motorInput,0.1)
-    meas = [robotPos[0] + random.gauss(0, 1), robotPos[1] + random.gauss(0, 1), robotPos[2] + random.gauss(0, 0.05)]
-    if meas is not False:
-        robotPos=kalmanFilter.update(meas)
-    globalMap.setRobot(robotPos)
+    # navigation algorithm start
+    print("Start navigation")
+    while(not goal):
+        # get robot position with kalmanFilter
+        robotPos=kalmanFilter.predict(motorInput,0.1)
+        meas = [robotPos[0] + random.gauss(0, 1), robotPos[1] + random.gauss(0, 1), robotPos[2] + random.gauss(0, 0.05)]
+        if meas is not False:
+            robotPos=kalmanFilter.update(meas)
+        globalMap.setRobot(robotPos)
 
-    #Check if it has reached the goal
-    if  abs(globalMap.getGoal()[0]-globalMap.getRobot()[0])+abs(globalMap.getGoal()[1]-globalMap.getRobot()[1]) < 30:
-        goal = True
+        #Check if it has reached the goal
+        if  abs(globalMap.getGoal()[0]-globalMap.getRobot()[0])+abs(globalMap.getGoal()[1]-globalMap.getRobot()[1]) < 30:
+            goal = True
 
-    # Make the robot move
-    desiredAngleCorrection = motionPlanning.getMotionAngle(globalMap.getPath(),globalMap.getRobot())
-    omega = -int(desiredAngleCorrection)
-    motorSpeed = 180 - abs(int(3 * omega))
-    kidnap = False
-    motorInput=[motorSpeed*np.cos(globalMap.getRobot()[2])/3.2,motorSpeed*np.sin(globalMap.getRobot()[2])/3.2, -1.1*(omega*np.pi/180)]
+        # Make the robot move
+        desiredAngleCorrection = motionPlanning.getMotionAngle(globalMap.getPath(),globalMap.getRobot())
+        omega = -int(desiredAngleCorrection)
+        motorSpeed = 180 - abs(int(3 * omega))
+        kidnap = False
+        motorInput=[motorSpeed*np.cos(globalMap.getRobot()[2])/3.2,motorSpeed*np.sin(globalMap.getRobot()[2])/3.2, -1.1*(omega*np.pi/180)]
 
-    # Check if the robot was kidnapped
-    if(kidnap):
-        print("Kidnap")
-        time.sleep(10)
-        mapInitialisation()
-        x_coords, y_coords=displayRoute(globalMap.getPath(),False)
+        # Check if the robot was kidnapped
+        if(kidnap):
+            print("Kidnap")
+            time.sleep(10)
+            mapInitialisation(vision, globalMap)
+            x_coords, y_coords=displayRoute(globalMap.getPath(), globalMap, vision, False)
 
-    # Displaying
-    image = vision.image.copy()
-    cv2.circle(image, (int(globalMap.getGoal()[0]), int(globalMap.getGoal()[1])), 15, (0, 0, 255), 1)
-    cv2.circle(image, (int(globalMap.getRobot()[0]), int(globalMap.getRobot()[1])), 15, (255, 0, 0), 1)
-    cv2.arrowedLine(image,(int(globalMap.getRobot()[0]), int(globalMap.getRobot()[1])),(int(globalMap.getRobot()[0]+30*np.cos(globalMap.getRobot()[2])),
-                    int(globalMap.getRobot()[1]+30*np.sin(globalMap.getRobot()[2]))),color=(255, 0, 0),thickness=1, tipLength=0.2)
+        # Displaying
+        image = vision.image.copy()
+        cv2.circle(image, (int(globalMap.getGoal()[0]), int(globalMap.getGoal()[1])), 15, (0, 0, 255), 1)
+        cv2.circle(image, (int(globalMap.getRobot()[0]), int(globalMap.getRobot()[1])), 15, (255, 0, 0), 1)
+        cv2.arrowedLine(image,(int(globalMap.getRobot()[0]), int(globalMap.getRobot()[1])),(int(globalMap.getRobot()[0]+30*np.cos(globalMap.getRobot()[2])),
+                        int(globalMap.getRobot()[1]+30*np.sin(globalMap.getRobot()[2]))),color=(255, 0, 0),thickness=1, tipLength=0.2)
 
-    cv2.circle(image, (int(meas[0]), int(meas[1])), 15, (0, 255, 0), 1)
-    cv2.arrowedLine(image,(int(meas[0]), int(meas[1])),(int(meas[0]+30*np.cos(meas[2])),
-                    int(meas[1]+30*np.sin(meas[2]))),color=(0, 255, 0),thickness=1, tipLength=0.2)
-    for i in range(len(x_coords)):
-        cv2.circle(image, (x_coords[i], y_coords[i]), 1, (0, 0, 255), 2)
-    resized_up = cv2.resize(image, up_points, interpolation= cv2.INTER_LINEAR)
-    cv2.putText(resized_up, "angle{:d}, robot : x {:d}, y {:d}".format(int(motionPlanning.getMotionAngle(globalMap.getPath(),globalMap.getRobot())),int(globalMap.getRobot()[0]),int(globalMap.getRobot()[1])),(5, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1, cv2.LINE_AA)
-    cv2.imshow('Robot', resized_up)
-    cv2.waitKey(1)
+        cv2.circle(image, (int(meas[0]), int(meas[1])), 15, (0, 255, 0), 1)
+        cv2.arrowedLine(image,(int(meas[0]), int(meas[1])),(int(meas[0]+30*np.cos(meas[2])),
+                        int(meas[1]+30*np.sin(meas[2]))),color=(0, 255, 0),thickness=1, tipLength=0.2)
+        for i in range(len(x_coords)):
+            cv2.circle(image, (x_coords[i], y_coords[i]), 1, (0, 0, 255), 2)
+        #resized_up = cv2.resize(image, up_points, interpolation= cv2.INTER_LINEAR)
+        cv2.putText(image, "angle{:d}, robot : x {:d}, y {:d}".format(int(motionPlanning.getMotionAngle(globalMap.getPath(),globalMap.getRobot())),int(globalMap.getRobot()[0]),int(globalMap.getRobot()[1])),(5, 20), cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1, cv2.LINE_AA)
+        cv2.imshow('Robot', image)
+        cv2.waitKey(1)
 
-    time.sleep(0.1)
+        time.sleep(0.1)
 
-# Goal is reached, end
-print("Goal reached")
-time.sleep(15)
+    # Goal is reached, end
+    print("Goal reached")
+    time.sleep(15)
