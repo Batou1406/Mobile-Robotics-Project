@@ -92,9 +92,9 @@ def fakemain():
     #  Create and setup a window, display purpose only
     cv2.startWindowThread()
     cv2.imshow('Robot', vision.imageDraw)
-    cv2.resizeWindow('Robot', up_width, up_height)
+    #cv2.resizeWindow('Robot', up_width, up_height)
     up_points = (up_width, up_height)
-    resized_up = cv2.resize(vision.imageDraw, up_points, interpolation= cv2.INTER_LINEAR)
+    #resized_up = cv2.resize(vision.imageDraw, up_points, interpolation= cv2.INTER_LINEAR)
     cv2.imshow('Robot', vision.imageDraw)
     #cv2.resizeWindow('Robot', up_width, up_height)
 
